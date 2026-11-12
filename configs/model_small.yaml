@@ -1,0 +1,13 @@
+# Model Architecture Configuration (Small / Fast Prototyping)
+model:
+  name: "ParagAI-Small"
+  vocab_size: 2048
+  max_seq_len: 256
+  n_embd: 192
+  n_head: 6
+  n_layer: 6
+  dropout: 0.1
+  bias: false
+  rms_norm_eps: 1.0e-5
+  rope_theta: 10000.0
+
