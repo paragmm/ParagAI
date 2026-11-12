@@ -72,7 +72,7 @@ dmypy.json
 checkpoints/*.pt
 checkpoints/*.bin
 checkpoints/*.safetensors
-checkpoints/*.gguf
+# checkpoints/*.gguf
 checkpoints/export_hf/
 !checkpoints/.gitkeep
 

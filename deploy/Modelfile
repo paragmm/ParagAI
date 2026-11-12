@@ -1,24 +1,20 @@
 # ParagAI Ollama Deployment Specification
 FROM ../checkpoints/paragai.gguf
 
-PARAMETER temperature 0.7
+PARAMETER temperature 0.3
 PARAMETER top_p 0.9
 PARAMETER top_k 40
-PARAMETER repeat_penalty 1.1
+PARAMETER repeat_penalty 1.15
 PARAMETER stop "<|im_end|>"
 PARAMETER stop "<|endoftext|>"
+PARAMETER stop "<|im_start|>"
 
-SYSTEM """
-You are ParagAI, a compact, professional AI assistant built from first principles in Python by Parag.
-Respond thoughtfully, concisely, and accurately.
-"""
+SYSTEM """You are ParagAI, a compact, professional AI assistant built from first principles in Python."""
 
-TEMPLATE """
-{{ if .System }}<|im_start|>system
+TEMPLATE """{{ if .System }}<|im_start|>system
 {{ .System }}<|im_end|>
 {{ end }}{{ if .Prompt }}<|im_start|>user
 {{ .Prompt }}<|im_end|>
 <|im_start|>assistant
-{{ end }}{{ .Response }}
-"""
+{{ end }}{{ .Response }}"""
 

@@ -24,11 +24,17 @@ def main():
     parser = argparse.ArgumentParser(description="Chat interactively with a trained ParagAI model")
     parser.add_argument("--checkpoint", type=str, default="checkpoints/best_model.pt", help="Path to checkpoint .pt")
     parser.add_argument("--tokenizer", type=str, default="checkpoints/tokenizer.json", help="Path to tokenizer.json")
-    parser.add_argument("--temperature", type=float, default=0.8, help="Sampling temperature")
+    parser.add_argument("--temperature", type=float, default=0.3, help="Sampling temperature")
     parser.add_argument("--top_k", type=int, default=40, help="Top-k filtering threshold")
     parser.add_argument("--top_p", type=float, default=0.9, help="Top-p nucleus sampling threshold")
     parser.add_argument("--max_tokens", type=int, default=150, help="Maximum new tokens to generate")
     parser.add_argument("--chatml", action="store_true", default=True, help="Use ChatML formatting for prompt")
+    parser.add_argument(
+        "--system",
+        type=str,
+        default="You are ParagAI, a compact, professional AI assistant built from first principles in Python.",
+        help="System instruction for ChatML prompt"
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.checkpoint):
@@ -81,7 +87,11 @@ def main():
 
             # Format with ChatML if requested
             if args.chatml:
-                prompt_text = f"<|im_start|>user\n{user_input}<|im_end|>\n<|im_start|>assistant\n"
+                prompt_text = (
+                    f"<|im_start|>system\n{args.system}<|im_end|>\n"
+                    f"<|im_start|>user\n{user_input}<|im_end|>\n"
+                    f"<|im_start|>assistant\n"
+                )
             else:
                 prompt_text = user_input
 

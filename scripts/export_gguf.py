@@ -23,12 +23,25 @@ def convert_to_gguf(
     with open(tokenizer_path, "r", encoding="utf-8") as f:
         tok_data = json.load(f)
 
+    b2u = gguf.bytes_to_unicode()
+
+    def to_gpt2_token_bytes(raw_token) -> bytes:
+        if isinstance(raw_token, str):
+            if raw_token in ("<pad>", "<unk>", "<bos>", "<eos>"):
+                return raw_token.encode("utf-8")
+            raw_bytes = raw_token.encode("utf-8")
+        elif isinstance(raw_token, (bytes, bytearray)):
+            raw_bytes = bytes(raw_token)
+        else:
+            raw_bytes = str(raw_token).encode("utf-8")
+        return "".join(b2u[b] for b in raw_bytes).encode("utf-8")
+
     if tok_data.get("type") == "bpe":
-        vocab_dict = {int(k): bytes(v) for k, v in tok_data["vocab"].items()}
-        tokens = [vocab_dict.get(i, b"<unk>") for i in range(len(vocab_dict))]
+        vocab_dict = {int(k): v for k, v in tok_data["vocab"].items()}
+        tokens = [to_gpt2_token_bytes(vocab_dict.get(i, "<unk>")) for i in range(len(vocab_dict))]
     else:
         itos = {int(k): v for k, v in tok_data["itos"].items()}
-        tokens = [itos.get(i, "<unk>").encode("utf-8") for i in range(len(itos))]
+        tokens = [to_gpt2_token_bytes(itos.get(i, "<unk>")) for i in range(len(itos))]
 
     writer = gguf.GGUFWriter(output_path, arch="llama")
 
