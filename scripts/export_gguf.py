@@ -19,27 +19,16 @@ def convert_to_gguf(
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
 
-    # Load tokenizer vocabulary with GPT-2 byte-to-unicode encoding
-    # This prevents llama.cpp from outputting [UNK_BYTE_0x20] for space or [UNK_BYTE_0x0a] for newline
-    b2u = gguf.bytes_to_unicode()
-
-    def to_gpt2_token_bytes(raw_token) -> bytes:
-        if isinstance(raw_token, str) and raw_token in ("<pad>", "<unk>", "<bos>", "<eos>"):
-            return raw_token.encode("utf-8")
-        if isinstance(raw_token, (bytes, bytearray)):
-            return "".join(b2u[b] for b in raw_token).encode("utf-8")
-        raw_bytes = str(raw_token).encode("utf-8")
-        return "".join(b2u[b] for b in raw_bytes).encode("utf-8")
-
+    # Load tokenizer vocabulary
     with open(tokenizer_path, "r", encoding="utf-8") as f:
         tok_data = json.load(f)
 
     if tok_data.get("type") == "bpe":
-        vocab_dict = {int(k): v for k, v in tok_data["vocab"].items()}
-        tokens = [to_gpt2_token_bytes(vocab_dict.get(i, "<unk>")) for i in range(len(vocab_dict))]
+        vocab_dict = {int(k): bytes(v) for k, v in tok_data["vocab"].items()}
+        tokens = [vocab_dict.get(i, b"<unk>") for i in range(len(vocab_dict))]
     else:
         itos = {int(k): v for k, v in tok_data["itos"].items()}
-        tokens = [to_gpt2_token_bytes(itos.get(i, "<unk>")) for i in range(len(itos))]
+        tokens = [itos.get(i, "<unk>").encode("utf-8") for i in range(len(itos))]
 
     writer = gguf.GGUFWriter(output_path, arch="llama")
 
@@ -89,8 +78,8 @@ def convert_to_gguf(
     merges_list = []
     if tok_type == "bpe" and "merges" in tok_data:
         for (p0, p1) in tok_data["merges"]:
-            t0 = to_gpt2_token_bytes(tok_data["vocab"].get(str(p0), "")).decode("utf-8")
-            t1 = to_gpt2_token_bytes(tok_data["vocab"].get(str(p1), "")).decode("utf-8")
+            t0 = tok_data["vocab"].get(str(p0), "")
+            t1 = tok_data["vocab"].get(str(p1), "")
             merges_list.append(f"{t0} {t1}")
     if not merges_list:
         merges_list = ["<pad> <unk>"]
