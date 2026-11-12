@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 class ModelConfig(BaseModel):
     """Configuration for ParagAI Transformer Model."""
     name: str = "ParagAI-Small"
-    vocab_size: int = Field(default=2048, ge=64, description="Vocabulary size")
+    vocab_size: int = Field(default=2048, ge=16, description="Vocabulary size")
     max_seq_len: int = Field(default=256, ge=16, description="Maximum context window length")
     n_embd: int = Field(default=192, ge=32, description="Embedding dimension")
     n_head: int = Field(default=6, ge=1, description="Number of attention heads")

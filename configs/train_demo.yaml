@@ -1,0 +1,15 @@
+# Fast Demo Training Configuration
+training:
+  batch_size: 16
+  learning_rate: 6.0e-4
+  min_lr: 6.0e-5
+  warmup_iters: 20
+  max_iters: 150
+  weight_decay: 0.1
+  grad_clip: 1.0
+  eval_interval: 50
+  eval_iters: 10
+  device: "cpu"
+  checkpoint_dir: "checkpoints"
+  data_dir: "data/processed"
+
