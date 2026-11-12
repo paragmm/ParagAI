@@ -38,8 +38,10 @@ def convert_to_gguf(
     writer.add_embedding_length(config["hidden_size"])
     writer.add_block_count(config["num_hidden_layers"])
     writer.add_head_count(config["num_attention_heads"])
-    writer.add_feed_forward_length(config["hidden_size"] * 4)
+    writer.add_feed_forward_length(config.get("intermediate_size", config["hidden_size"] * 4))
     writer.add_layer_norm_rms_eps(config.get("rms_norm_eps", 1e-5))
+    writer.add_rope_freq_base(config.get("rope_theta", 10000.0))
+    writer.add_rope_dimension_count(config["hidden_size"] // config["num_attention_heads"])
 
     # 2. Tokenizer metadata
     writer.add_tokenizer_model("llama")
@@ -48,14 +50,18 @@ def convert_to_gguf(
     writer.add_eos_token_id(3)
     writer.add_pad_token_id(0)
 
-    # 3. Tensors
+    # 3. Tensors mapped to GGUF standard llama naming convention
+    tensor_map = gguf.get_tensor_name_map(gguf.MODEL_ARCH.LLAMA, config["num_hidden_layers"])
     with safe_open(safetensors_path, framework="numpy", device="cpu") as f:
         for key in f.keys():
             tensor = f.get_tensor(key)
             # Ensure float32 or float16 numpy array
             if tensor.dtype == np.float64:
                 tensor = tensor.astype(np.float32)
-            writer.add_tensor(key, tensor)
+            mapped_key = tensor_map.get_name(key, try_suffixes=(".weight", ".bias"))
+            if mapped_key is None:
+                mapped_key = key
+            writer.add_tensor(mapped_key, tensor)
 
     writer.write_header_to_file()
     writer.write_kv_data_to_file()
