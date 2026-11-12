@@ -1,0 +1,1350 @@
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all files currently modified in this git repository.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "git status --short"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current disk space and free storage.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "df -h"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Display active python processes on the machine.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "tasklist | findstr python"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Check Python environment version and interpreter path.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python --version"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Run unit test suite using pytest.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "pytest tests/ -v"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+List all models currently installed in Ollama.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ollama list"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Show current network configuration and IP address.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "ipconfig"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Search for all markdown files in the plans directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "dir /s /b .plans\\*.md"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Count the total lines of code in the src directory.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "Get-ChildItem -Recurse src | Get-Content | Measure-Object -Line"}<|im_end|>
+
+<|im_start|>system
+You are an autonomous AI execution agent capable of emitting structured JSON tool commands.<|im_end|>
+<|im_start|>user
+[TASK: automation]
+Export the current trained model to GGUF format.<|im_end|>
+<|im_start|>assistant
+<|tool_call|>
+{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}<|im_end|>
+
