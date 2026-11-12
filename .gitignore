@@ -77,7 +77,6 @@ checkpoints/export_hf/
 !checkpoints/.gitkeep
 
 # Processed / generated datasets
-data/processed/*
 !data/processed/.gitkeep
 
 # IDEs
