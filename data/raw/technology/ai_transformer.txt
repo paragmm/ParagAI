@@ -1,0 +1,9 @@
+Artificial intelligence has evolved rapidly with the introduction of deep neural networks.
+The Transformer architecture, introduced in 2017, replaced recurrent neural networks as the foundation of modern NLP.
+At the heart of the Transformer lies the multi-head self-attention mechanism.
+Self-attention allows the model to weigh the relevance of different words in a sentence simultaneously.
+Decoder-only transformers, such as GPT and LLaMA, predict tokens autoregressively from left to right.
+Rotary Position Embeddings (RoPE) encode relative position information directly into query and key projections.
+Root Mean Square Normalization (RMSNorm) normalizes activation tensors efficiently without computing mean centering.
+By training on extensive text corpora through next-token prediction, transformers learn syntax, grammar, and reasoning patterns.
+

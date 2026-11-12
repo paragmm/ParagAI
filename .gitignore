@@ -75,10 +75,8 @@ checkpoints/*.safetensors
 checkpoints/*.gguf
 !checkpoints/.gitkeep
 
-# Data (large datasets)
-data/raw/*
+# Processed / generated datasets
 data/processed/*
-!data/raw/.gitkeep
 !data/processed/.gitkeep
 
 # IDEs

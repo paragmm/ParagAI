@@ -36,6 +36,14 @@ def main():
     with open(args.model_config, "r", encoding="utf-8") as f:
         model_yaml = yaml.safe_load(f)["model"]
 
+    # If data path is a directory, automatically merge all text files
+    if os.path.isdir(args.data):
+        from scripts.prepare_data import merge_categorized_files
+        processed_file = "data/processed/combined_corpus.txt"
+        logger.info(f"Directory detected at '{args.data}'. Merging all files into '{processed_file}'...")
+        merge_categorized_files(raw_dir=args.data, output_file=processed_file)
+        args.data = processed_file
+
     # Load or generate sample text if not found
     if not os.path.exists(args.data):
         logger.info(f"Training data not found at {args.data}. Creating default sample corpus...")

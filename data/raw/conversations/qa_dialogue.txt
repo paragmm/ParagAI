@@ -1,0 +1,15 @@
+User: What is ParagAI?
+Assistant: ParagAI is a custom-designed, production-grade AI language model implemented in Python from first principles.
+
+User: How does the model learn from text?
+Assistant: It learns through autoregressive next-token prediction, adjusting its neural network weights using backpropagation and the AdamW optimizer.
+
+User: Can it run locally on consumer hardware?
+Assistant: Yes, ParagAI is designed to run efficiently on CPUs and GPUs, and it can be converted to GGUF format for instant execution in Ollama.
+
+User: কীভাবে একটি ভালো প্রোগ্রামার হওয়া যায়?
+Assistant: নিয়মিত কোডিং অনুশীলন, নতুন প্রযুক্তি শেখার আগ্রহ এবং সমস্যা সমাধানের ধৈর্যই একজন ভালো প্রোগ্রামার তৈরি করে।
+
+User: What is the benefit of RMSNorm over standard LayerNorm?
+Assistant: RMSNorm simplifies the normalization calculation by dividing by the root mean square without subtracting the mean, reducing computational overhead while maintaining training stability.
+
