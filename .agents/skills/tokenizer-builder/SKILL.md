@@ -11,15 +11,16 @@ This skill provides step-by-step procedures for building, training, and testing 
 
 ## Available Tokenizer Types
 
-1. **`CharTokenizer` (`src/paragai/tokenizer/char_tokenizer.py`):**
-   - Maps each unique character to an integer ID.
-   - Deterministic, zero-dependency, small vocabulary (~65 to 100 characters).
-   - Ideal for instant prototyping and sanity checking.
-
-2. **`BPETokenizer` (`src/paragai/tokenizer/bpe_tokenizer.py`):**
+1. **`BPETokenizer` (`src/paragai/tokenizer/bpe_tokenizer.py`) — [Mandatory for Pro-Grade]:**
    - Subword Byte-Pair Encoding algorithm (similar to GPT-2 / LLaMA).
-   - Iteratively merges the most frequent byte/token pairs in the corpus.
-   - Vocabulary size configurable (e.g. 512, 2048, or 8192 tokens).
+   - Iteratively merges the most frequent byte/token pairs in the bilingual corpus.
+   - Standard vocabulary size: 4,096 to 8,192 tokens.
+   - Prevents character-level hallucinations and spelling errors.
+
+2. **`CharTokenizer` (`src/paragai/tokenizer/char_tokenizer.py`) — [Prototype Only]:**
+   - Maps each unique character to an integer ID.
+   - Vocabulary size: 100 to 150 characters.
+   - Strictly reserved for scalar engine testing and rapid overfitting smoke tests. Not suitable for production conversational intelligence.
 
 ---
 

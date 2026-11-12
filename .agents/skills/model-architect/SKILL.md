@@ -11,10 +11,11 @@ This skill guides the design, implementation, and verification of the neural net
 
 ## Architecture Specification
 
-ParagAI adheres to the modern Decoder-Only Transformer standard:
-* **Position Encoding:** Rotary Position Embedding (RoPE)
+ParagAI adheres to the modern Decoder-Only Transformer standard with Pro-Grade enterprise optimizations:
+* **Position Encoding:** Rotary Position Embedding (RoPE) with dynamic offset slicing for cached generation
 * **Normalization:** RMSNorm with learnable scaling $\gamma$, no bias
-* **Attention:** Scaled Dot-Product Attention with triangular causal mask
+* **Attention Engine:** PyTorch 2.0 SDPA (`F.scaled_dot_product_attention`) with native C++ FlashAttention kernel acceleration
+* **Inference Engine:** Key-Value (KV) Cache with $O(1)$ constant time step generation
 * **Feed-Forward:** SwiGLU (Gated Linear Unit with Swish/SiLU activation)
 * **Tied Embeddings:** Output projection layer shares weights with token input embeddings
 
@@ -29,22 +30,26 @@ $$\text{RMSNorm}(x) = \frac{x}{\sqrt{\frac{1}{d} \sum_{i=1}^d x_i^2 + \epsilon}}
 
 ### 2. Rotary Position Embedding (`RoPE`)
 - Location: `src/paragai/model/rope.py`
-- Computes complex or 2D rotation on $(Q, K)$ heads before dot-product attention.
+- Computes complex 2D rotation on $(Q, K)$ heads before dot-product attention.
 - Frequency base default: $\theta = 10000.0$.
 - Preserves relative token distance decaying over long sequences.
+- Offset calculation for KV-Cache:
+  ```python
+  past_len = kv_cache[0].size(2) if kv_cache is not None else 0
+  freqs = freqs_cis[past_len : past_len + T]
+  ```
 
-### 3. Causal Multi-Head Self-Attention (`MultiHeadAttention`)
+### 3. Pro-Grade Causal Self-Attention with KV-Cache & SDPA
 - Location: `src/paragai/model/attention.py`
 - Projections: $Q = X W_q$, $K = X W_k$, $V = X W_v$
-- Causal Mask: Upper-triangular matrix filled with $-\infty$ (or $-10000.0$) where $j > i$ to prevent looking ahead.
-- Attention Calculation:
-  $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}} + M\right) V$$
-- Shape Invariant: Input `(B, T, C)` $\to$ Output `(B, T, C)`.
+- **KV-Cache Ingestion:** Concatenates past cached keys and values with current step:
+  $$K_{\text{new}} = [K_{\text{past}} \,;\, K_{\text{current}}], \quad V_{\text{new}} = [V_{\text{past}} \,;\, V_{\text{current}}]$$
+- **Hardware Acceleration:** PyTorch 2.0 `F.scaled_dot_product_attention(q, k, v, is_causal=is_causal)` avoids quadratic $O(T^2)$ memory allocation and executes directly via optimized C++ FlashAttention kernels.
 
 ### 4. SwiGLU Feed-Forward Network (`FeedForward`)
 - Location: `src/paragai/model/feed_forward.py`
   $$\text{SwiGLU}(x) = (x W_{\text{gate}} \cdot \text{SiLU}(x W_{\text{gate}})) \odot (x W_{\text{up}}) W_{\text{down}}$$
-- Expansion factor: $4 \times d_{\text{model}}$ (or $\frac{8}{3} d_{\text{model}}$ for LLaMA-style).
+- Expansion factor: $\frac{8}{3} d_{\text{model}}$ (LLaMA-style).
 
 ---
 

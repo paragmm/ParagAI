@@ -7,9 +7,9 @@ description: >-
 
 # ParagAI Model Trainer Skill
 
-This skill governs the training pipeline, hyperparameter tuning, loss tracking, and checkpoint management for `ParagAI`.
+This skill governs the training pipeline, hyperparameter tuning, loss tracking, checkpoint management, and multi-task fine-tuning for `ParagAI`.
 
-## 3-Stage Training Execution Protocol
+## 4-Stage Pro-Grade Training Execution Protocol
 
 Always execute training in this strict sequence:
 
@@ -21,20 +21,44 @@ python scripts/train.py --config configs/sanity_test.yaml
 - **Target:** Training loss must drop from $\approx 4.5$ to $< 0.1$ within 300 steps.
 - **Troubleshooting:** If loss stalls at $\approx \ln(\text{vocab\_size})$, check learning rate, attention masks, and gradient zeroing.
 
-### Stage 2: Baseline Training (TinyShakespeare)
+### Stage 2: Foundation Pre-training (Autoregressive Next-Token)
+Train base linguistic capabilities across bilingual text corpora:
 ```bash
-python scripts/prepare_data.py --dataset tinyshakespeare
 python scripts/train.py --config configs/train_config.yaml
 ```
-- **Target:** Validation loss $< 1.6$, perplexity $< 5.0$.
+- **Target:** Validation loss $< 1.8$, perplexity $< 6.0$.
 - **Validation Interval:** Evaluates every 250 iterations over 50 batches.
 - **Checkpointing:** Saves to `checkpoints/best_model.pt` when validation loss reaches a new low.
 
-### Stage 3: Extended / Custom Training
-For custom text or large corpora (e.g., TinyStories, Bengali corpus):
-```bash
-python scripts/train.py --config configs/train_config.yaml --data data/raw/custom.txt --resume checkpoints/latest.pt
-```
+### Stage 3: Supervised Fine-Tuning (SFT) for Dialogue & Multi-Task
+Raw pre-training alone creates random text continuations. To achieve **Professional-Grade Chat & Task Execution**, the model must be fine-tuned on instruction datasets:
+1. **ChatML Format:**
+   ```text
+   <|im_start|>user
+   What are the core advantages of Transformers?<|im_end|>
+   <|im_start|>assistant
+   Transformers utilize self-attention mechanisms to process tokens in parallel...<|im_end|>
+   ```
+2. **Translation Conditioning (EN ↔ BN):**
+   ```text
+   <|im_start|>user
+   [TASK: translate | source: en | target: bn]
+   Artificial intelligence is transforming society.<|im_end|>
+   <|im_start|>assistant
+   কৃত্রিম বুদ্ধিমত্তা সমাজকে রূপান্তরিত করছে।<|im_end|>
+   ```
+3. **Agentic Tool Calling:**
+   ```text
+   <|im_start|>user
+   [TASK: automation] List files in current directory.<|im_end|>
+   <|im_start|>assistant
+   <|tool_call|>{"action": "shell", "command": "dir"}<|im_end|>
+   ```
+
+### Stage 4: GPU Scaling on Google Colab / Cloud
+For models $> 15\text{M}$ parameters with BPE tokenizers ($\ge 4,096$ vocab):
+- Train using `notebooks/train_colab.ipynb` on NVIDIA T4/A100 GPUs.
+- Batch size: 32 to 64, warmup steps: 500, AdamW with cosine decay.
 
 ---
 
