@@ -1,6 +1,13 @@
 """Command-line script to train ParagAI models."""
 
 import os
+import sys
+
+# Ensure repository root and src are in Python path
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, repo_root)
+sys.path.insert(0, os.path.join(repo_root, "src"))
+
 import argparse
 import yaml
 import torch
@@ -38,7 +45,10 @@ def main():
 
     # If data path is a directory, automatically merge all text files
     if os.path.isdir(args.data):
-        from scripts.prepare_data import merge_categorized_files
+        try:
+            from scripts.prepare_data import merge_categorized_files
+        except ImportError:
+            from prepare_data import merge_categorized_files
         processed_file = "data/processed/combined_corpus.txt"
         logger.info(f"Directory detected at '{args.data}'. Merging all files into '{processed_file}'...")
         merge_categorized_files(raw_dir=args.data, output_file=processed_file)

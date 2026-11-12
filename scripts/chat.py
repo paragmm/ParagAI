@@ -1,6 +1,11 @@
 """Interactive terminal chat interface for ParagAI models."""
 
 import os
+import sys
+
+# Ensure src is in Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+
 import argparse
 import torch
 from rich.console import Console
