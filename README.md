@@ -42,6 +42,11 @@ pip install -e .
 pytest tests/ -v
 ```
 
+### 4. Train on Free Google Colab GPU (Optional)
+Run on a free NVIDIA T4 GPU in 1 click using the included notebook:
+* Open Google Colab and load: `notebooks/train_colab.ipynb`
+* Or clone `https://github.com/paragmm/ParagAI.git` directly in Colab.
+
 ---
 
 ## Directory Structure
