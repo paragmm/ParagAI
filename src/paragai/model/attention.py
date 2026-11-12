@@ -1,7 +1,7 @@
-"""Causal Multi-Head Self-Attention module."""
+"""Causal Multi-Head Self-Attention module with PyTorch SDPA and KV-Cache."""
 
 import math
-from typing import Optional
+from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,13 +10,17 @@ from paragai.model.rope import apply_rope
 
 
 class CausalSelfAttention(nn.Module):
-    """Causal Multi-Head Self-Attention with Rotary Position Embeddings."""
+    """
+    Pro-Grade Causal Multi-Head Self-Attention.
+    Supports PyTorch 2.0 SDPA (FlashAttention kernel acceleration) and Key-Value (KV) Caching.
+    """
 
     def __init__(self, config: ModelConfig):
         super().__init__()
         self.n_head = config.n_head
         self.n_embd = config.n_embd
         self.head_dim = config.head_dim
+        self.dropout_rate = config.dropout
 
         # Projections for Q, K, V
         self.q_proj = nn.Linear(config.n_embd, config.n_embd, bias=config.bias)
@@ -24,14 +28,15 @@ class CausalSelfAttention(nn.Module):
         self.v_proj = nn.Linear(config.n_embd, config.n_embd, bias=config.bias)
         self.out_proj = nn.Linear(config.n_embd, config.n_embd, bias=config.bias)
 
-        self.attn_dropout = nn.Dropout(config.dropout)
         self.resid_dropout = nn.Dropout(config.dropout)
 
-        # Causal mask: lower triangular matrix of 1s
-        mask = torch.tril(torch.ones(config.max_seq_len, config.max_seq_len))
-        self.register_buffer("mask", mask.view(1, 1, config.max_seq_len, config.max_seq_len))
-
-    def forward(self, x: torch.Tensor, freqs_cis: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        freqs_cis: Optional[torch.Tensor] = None,
+        kv_cache: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        use_cache: bool = False,
+    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         B, T, C = x.size()
 
         # Compute Q, K, V projections and reshape to (B, n_head, T, head_dim)
@@ -39,29 +44,41 @@ class CausalSelfAttention(nn.Module):
         k = self.k_proj(x).view(B, T, self.n_head, self.head_dim).transpose(1, 2)
         v = self.v_proj(x).view(B, T, self.n_head, self.head_dim).transpose(1, 2)
 
-        # Apply RoPE if frequencies are supplied
+        # Calculate position offset if KV-cache is present
+        past_len = kv_cache[0].size(2) if kv_cache is not None else 0
+
+        # Apply RoPE to query and key
         if freqs_cis is not None:
-            # Sliced to current sequence length T
-            freqs = freqs_cis[:T]
+            freqs = freqs_cis[past_len : past_len + T]
             q = apply_rope(q, freqs)
             k = apply_rope(k, freqs)
 
-        # Scaled dot-product attention
-        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        # Update Key-Value cache
+        if kv_cache is not None:
+            past_k, past_v = kv_cache
+            k = torch.cat([past_k, k], dim=2)
+            v = torch.cat([past_v, v], dim=2)
 
-        # Apply causal mask (mask out future tokens)
-        causal_mask = self.mask[:, :, :T, :T]
-        scores = scores.masked_fill(causal_mask == 0, float("-inf"))
+        new_kv_cache = (k, v) if use_cache else None
 
-        weights = F.softmax(scores, dim=-1)
-        weights = self.attn_dropout(weights)
+        # Determine causal masking
+        # When generating single token with past KV-cache, causal mask is not required
+        is_causal = (T > 1) and (past_len == 0)
 
-        # Context output: (B, n_head, T, head_dim)
-        y = torch.matmul(weights, v)
+        # High-performance Scaled Dot-Product Attention (SDPA)
+        # Automatically dispatches to FlashAttention-2 or memory-efficient kernels on GPU
+        dropout_p = self.dropout_rate if self.training else 0.0
+        y = F.scaled_dot_product_attention(
+            q,
+            k,
+            v,
+            is_causal=is_causal,
+            dropout_p=dropout_p,
+        )
 
-        # Re-assemble all heads side by side: (B, T, C)
+        # Re-assemble all heads: (B, T, C)
         y = y.transpose(1, 2).contiguous().view(B, T, C)
 
         # Output projection with residual dropout
-        return self.resid_dropout(self.out_proj(y))
-
+        out = self.resid_dropout(self.out_proj(y))
+        return out, new_kv_cache

@@ -1,6 +1,6 @@
-"""Full ParagAI Decoder-Only Transformer Language Model."""
+"""Full ParagAI Decoder-Only Transformer Language Model with KV-Cache."""
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Union
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,8 +12,8 @@ from paragai.model.transformer_block import TransformerBlock
 
 class ParagAIModel(nn.Module):
     """
-    ParagAI Autoregressive Decoder-Only Transformer.
-    Modern LLaMA-style architecture with RoPE, RMSNorm, SwiGLU, and weight tying.
+    ParagAI Pro-Grade Autoregressive Decoder-Only Transformer.
+    Modern LLaMA-style architecture with RoPE, RMSNorm, SwiGLU, SDPA, and KV-Cache.
     """
 
     def __init__(self, config: ModelConfig):
@@ -58,27 +58,42 @@ class ParagAIModel(nn.Module):
         self,
         idx: torch.Tensor,
         targets: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+        past_kv_caches: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None,
+        use_cache: bool = False,
+    ) -> Union[
+        Tuple[torch.Tensor, Optional[torch.Tensor]],
+        Tuple[torch.Tensor, Optional[torch.Tensor], List[Tuple[torch.Tensor, torch.Tensor]]]
+    ]:
         """
-        Forward pass.
+        Forward pass with optional KV-caching.
         Args:
             idx: Tensor of token IDs with shape (Batch, SeqLen)
             targets: Optional tensor of target token IDs with shape (Batch, SeqLen)
-        Returns:
-            Tuple of (logits, loss). Loss is None if targets is not provided.
+            past_kv_caches: Optional list of (K, V) cache tuples for each transformer block
+            use_cache: If True, returns (logits, loss, next_kv_caches)
         """
         B, T = idx.size()
-        assert T <= self.config.max_seq_len, (
-            f"Input sequence length ({T}) exceeds max_seq_len ({self.config.max_seq_len})"
+        past_len = past_kv_caches[0][0].size(2) if past_kv_caches is not None else 0
+        total_len = past_len + T
+        assert total_len <= self.config.max_seq_len, (
+            f"Total sequence length ({total_len}) exceeds max_seq_len ({self.config.max_seq_len})"
         )
 
         # Token embedding lookup
         x = self.token_embedding(idx)
         x = self.dropout(x)
 
-        # Pass through transformer blocks with RoPE frequencies
-        for block in self.blocks:
-            x = block(x, freqs_cis=self.freqs_cis)
+        new_kv_caches = []
+        for i, block in enumerate(self.blocks):
+            layer_cache = past_kv_caches[i] if past_kv_caches is not None else None
+            x, next_cache = block(
+                x,
+                freqs_cis=self.freqs_cis,
+                kv_cache=layer_cache,
+                use_cache=use_cache,
+            )
+            if use_cache:
+                new_kv_caches.append(next_cache)
 
         # Final RMSNorm
         x = self.final_norm(x)
@@ -88,16 +103,16 @@ class ParagAIModel(nn.Module):
 
         loss = None
         if targets is not None:
-            # Flatten across batch and sequence dimensions for Cross-Entropy Loss
             loss = F.cross_entropy(
                 logits.view(-1, self.config.vocab_size),
                 targets.view(-1),
                 ignore_index=-1,
             )
 
+        if use_cache:
+            return logits, loss, new_kv_caches
         return logits, loss
 
     def count_parameters(self) -> int:
         """Count total trainable parameters."""
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
-

@@ -1,6 +1,6 @@
-"""Autoregressive text generation pipeline."""
+"""Autoregressive text generation pipeline with Key-Value (KV) Caching."""
 
-from typing import Optional, Callable, Iterator
+from typing import Optional, Iterator
 import torch
 from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.base import BaseTokenizer
@@ -8,7 +8,7 @@ from paragai.inference.sampler import sample_next_token
 
 
 class Generator:
-    """Manages text generation and interactive streaming from a trained ParagAI model."""
+    """Manages high-speed text generation using KV-Caching from a trained ParagAI model."""
 
     def __init__(self, model: ParagAIModel, tokenizer: BaseTokenizer, device: Optional[torch.device] = None):
         self.model = model
@@ -27,19 +27,51 @@ class Generator:
         top_p: Optional[float] = 0.9,
         repetition_penalty: float = 1.1,
         stop_on_eos: bool = True,
+        use_cache: bool = True,
     ) -> str:
-        """Generate text continuation from a prompt."""
+        """Generate text continuation from a prompt with optional KV-caching."""
         token_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
         x = torch.tensor([token_ids], dtype=torch.long, device=self.device)
 
         generated = list(token_ids)
-        for _ in range(max_new_tokens):
-            # Crop context if length exceeds model max_seq_len
-            x_cond = x if x.size(1) <= self.model.config.max_seq_len else x[:, -self.model.config.max_seq_len :]
+        kv_caches = None
 
-            logits, _ = self.model(x_cond)
-            # Focus on the logits for the last token position: shape (VocabSize,)
+        # Prefill stage (process prompt)
+        if use_cache:
+            logits, _, kv_caches = self.model(x, use_cache=True)
             next_logits = logits[0, -1, :].clone()
+        else:
+            logits, _ = self.model(x)
+            next_logits = logits[0, -1, :].clone()
+
+        next_token = sample_next_token(
+            next_logits,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            repetition_penalty=repetition_penalty,
+            generated_tokens=torch.tensor(generated, device=self.device),
+        )
+
+        if stop_on_eos and next_token == self.tokenizer.EOS_ID:
+            return self.tokenizer.decode(generated)
+
+        generated.append(next_token)
+
+        # Decoding stage (generate new tokens one by one)
+        curr_token = torch.tensor([[next_token]], dtype=torch.long, device=self.device)
+        for _ in range(max_new_tokens - 1):
+            if len(generated) >= self.model.config.max_seq_len:
+                break
+
+            if use_cache:
+                # O(1) step: feed only the single new token into the network
+                logits, _, kv_caches = self.model(curr_token, past_kv_caches=kv_caches, use_cache=True)
+                next_logits = logits[0, -1, :].clone()
+            else:
+                x_full = torch.tensor([generated], dtype=torch.long, device=self.device)
+                logits, _ = self.model(x_full)
+                next_logits = logits[0, -1, :].clone()
 
             next_token = sample_next_token(
                 next_logits,
@@ -54,7 +86,7 @@ class Generator:
                 break
 
             generated.append(next_token)
-            x = torch.cat((x, torch.tensor([[next_token]], device=self.device)), dim=1)
+            curr_token = torch.tensor([[next_token]], dtype=torch.long, device=self.device)
 
         return self.tokenizer.decode(generated)
 
@@ -68,14 +100,37 @@ class Generator:
         top_p: Optional[float] = 0.9,
         repetition_penalty: float = 1.1,
     ) -> Iterator[str]:
-        """Stream generated characters/tokens one by one."""
+        """Stream generated characters/tokens using KV-cache with minimal latency."""
         token_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
         x = torch.tensor([token_ids], dtype=torch.long, device=self.device)
 
         generated = list(token_ids)
-        for _ in range(max_new_tokens):
-            x_cond = x if x.size(1) <= self.model.config.max_seq_len else x[:, -self.model.config.max_seq_len :]
-            logits, _ = self.model(x_cond)
+
+        # Prefill prompt
+        logits, _, kv_caches = self.model(x, use_cache=True)
+        next_logits = logits[0, -1, :].clone()
+
+        next_token = sample_next_token(
+            next_logits,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            repetition_penalty=repetition_penalty,
+            generated_tokens=torch.tensor(generated, device=self.device),
+        )
+
+        if next_token == self.tokenizer.EOS_ID:
+            return
+
+        generated.append(next_token)
+        yield self.tokenizer.decode([next_token])
+
+        curr_token = torch.tensor([[next_token]], dtype=torch.long, device=self.device)
+        for _ in range(max_new_tokens - 1):
+            if len(generated) >= self.model.config.max_seq_len:
+                break
+
+            logits, _, kv_caches = self.model(curr_token, past_kv_caches=kv_caches, use_cache=True)
             next_logits = logits[0, -1, :].clone()
 
             next_token = sample_next_token(
@@ -91,6 +146,5 @@ class Generator:
                 break
 
             generated.append(next_token)
-            x = torch.cat((x, torch.tensor([[next_token]], device=self.device)), dim=1)
+            curr_token = torch.tensor([[next_token]], dtype=torch.long, device=self.device)
             yield self.tokenizer.decode([next_token])
-
