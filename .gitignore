@@ -73,6 +73,7 @@ checkpoints/*.pt
 checkpoints/*.bin
 checkpoints/*.safetensors
 checkpoints/*.gguf
+checkpoints/export_hf/
 !checkpoints/.gitkeep
 
 # Processed / generated datasets
