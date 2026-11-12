@@ -50,7 +50,13 @@ def main():
     checkpoint = torch.load(args.checkpoint, map_location=device)
     model_config = ModelConfig(**checkpoint["model_config"])
     model = ParagAIModel(model_config)
-    model.load_state_dict(checkpoint["model_state_dict"])
+    
+    # Filter out legacy buffers (e.g. attn.mask from pre-SDPA checkpoints)
+    state_dict = {
+        k: v for k, v in checkpoint["model_state_dict"].items()
+        if not k.endswith(".attn.mask")
+    }
+    model.load_state_dict(state_dict, strict=False)
     model.to(device)
     model.eval()
 

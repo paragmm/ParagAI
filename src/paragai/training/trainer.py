@@ -118,7 +118,11 @@ class Trainer:
     def load_checkpoint(self, file_path: str) -> None:
         """Resume training from saved checkpoint."""
         checkpoint = torch.load(file_path, map_location=self.device)
-        self.model.load_state_dict(checkpoint["model_state_dict"])
+        state_dict = {
+            k: v for k, v in checkpoint["model_state_dict"].items()
+            if not k.endswith(".attn.mask")
+        }
+        self.model.load_state_dict(state_dict, strict=False)
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.current_iter = checkpoint["current_iter"]
         self.best_val_loss = checkpoint.get("best_val_loss", float("inf"))
