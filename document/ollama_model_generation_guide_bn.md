@@ -195,3 +195,4 @@ python scripts/export_gguf.py --input_dir checkpoints/export_hf --tokenizer chec
 ollama create paragai -f deploy/Modelfile
 ollama run paragai
 ```
+
