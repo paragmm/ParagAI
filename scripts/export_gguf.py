@@ -32,13 +32,27 @@ def convert_to_gguf(
 
     writer = gguf.GGUFWriter(output_path, arch="llama")
 
+    # Determine accurate feed_forward_length (SwiGLU intermediate size)
+    ffn_length = config.get("intermediate_size")
+    if ffn_length is None:
+        with safe_open(safetensors_path, framework="numpy", device="cpu") as f:
+            for k in f.keys():
+                if "gate_proj.weight" in k or "ffn_gate.weight" in k:
+                    ffn_length = int(f.get_tensor(k).shape[0])
+                    break
+        if ffn_length is None:
+            hidden_dim = 4 * config["hidden_size"]
+            hidden_dim = int(2 * hidden_dim / 3)
+            ffn_length = 64 * ((hidden_dim + 63) // 64)
+
     # 1. Model architecture hyperparameters
     writer.add_name("ParagAI")
     writer.add_context_length(config["max_position_embeddings"])
     writer.add_embedding_length(config["hidden_size"])
     writer.add_block_count(config["num_hidden_layers"])
     writer.add_head_count(config["num_attention_heads"])
-    writer.add_feed_forward_length(config.get("intermediate_size", config["hidden_size"] * 4))
+    writer.add_head_count_kv(config.get("num_key_value_heads", config["num_attention_heads"]))
+    writer.add_feed_forward_length(ffn_length)
     writer.add_layer_norm_rms_eps(config.get("rms_norm_eps", 1e-5))
     writer.add_rope_freq_base(config.get("rope_theta", 10000.0))
     writer.add_rope_dimension_count(config["hidden_size"] // config["num_attention_heads"])

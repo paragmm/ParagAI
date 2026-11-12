@@ -52,12 +52,18 @@ def convert_checkpoint_to_hf(checkpoint_path: str, output_dir: str) -> None:
     safetensors_path = os.path.join(output_dir, "model.safetensors")
     save_file(hf_tensors, safetensors_path)
 
+    # Calculate exact intermediate_size matching SwiGLUFeedForward
+    hidden_dim = 4 * model_config["n_embd"]
+    hidden_dim = int(2 * hidden_dim / 3)
+    intermediate_size = 64 * ((hidden_dim + 63) // 64)
+
     # Save standard LLaMA-style config.json
     hf_config = {
         "architectures": ["LlamaForCausalLM"],
         "model_type": "llama",
         "vocab_size": model_config["vocab_size"],
         "hidden_size": model_config["n_embd"],
+        "intermediate_size": intermediate_size,
         "num_hidden_layers": model_config["n_layer"],
         "num_attention_heads": model_config["n_head"],
         "num_key_value_heads": model_config["n_head"],
