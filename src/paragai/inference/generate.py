@@ -28,8 +28,21 @@ class Generator:
         repetition_penalty: float = 1.1,
         stop_on_eos: bool = True,
         use_cache: bool = True,
+        include_prompt: bool = True,
     ) -> str:
-        """Generate text continuation from a prompt with optional KV-caching."""
+        """Generate text continuation from a prompt with optional KV-caching.
+        
+        Args:
+            prompt: Input text prompt.
+            max_new_tokens: Maximum number of new tokens to generate.
+            temperature: Sampling temperature.
+            top_k: Top-k filtering threshold.
+            top_p: Top-p nucleus sampling threshold.
+            repetition_penalty: Penalty for repeating tokens.
+            stop_on_eos: Whether to stop generation when EOS token is sampled.
+            use_cache: Whether to use KV-caching for O(1) step generation.
+            include_prompt: If True, returns prompt + generated tokens. If False, returns generated tokens only.
+        """
         token_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
         x = torch.tensor([token_ids], dtype=torch.long, device=self.device)
 
@@ -54,7 +67,7 @@ class Generator:
         )
 
         if stop_on_eos and next_token == self.tokenizer.EOS_ID:
-            return self.tokenizer.decode(generated)
+            return self.tokenizer.decode(generated if include_prompt else generated[len(token_ids):])
 
         generated.append(next_token)
 
@@ -88,7 +101,7 @@ class Generator:
             generated.append(next_token)
             curr_token = torch.tensor([[next_token]], dtype=torch.long, device=self.device)
 
-        return self.tokenizer.decode(generated)
+        return self.tokenizer.decode(generated if include_prompt else generated[len(token_ids):])
 
     @torch.no_grad()
     def stream_generate(
@@ -99,6 +112,7 @@ class Generator:
         top_k: Optional[int] = 40,
         top_p: Optional[float] = 0.9,
         repetition_penalty: float = 1.1,
+        stop_on_eos: bool = True,
     ) -> Iterator[str]:
         """Stream generated characters/tokens using KV-cache with minimal latency."""
         token_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
@@ -119,7 +133,7 @@ class Generator:
             generated_tokens=torch.tensor(generated, device=self.device),
         )
 
-        if next_token == self.tokenizer.EOS_ID:
+        if stop_on_eos and next_token == self.tokenizer.EOS_ID:
             return
 
         generated.append(next_token)
@@ -142,7 +156,7 @@ class Generator:
                 generated_tokens=torch.tensor(generated, device=self.device),
             )
 
-            if next_token == self.tokenizer.EOS_ID:
+            if stop_on_eos and next_token == self.tokenizer.EOS_ID:
                 break
 
             generated.append(next_token)

@@ -15,6 +15,7 @@ def test_greedy_sampler():
 
 
 def test_generator_output_length():
+    torch.manual_seed(42)
     text = "abcdefghijklmnopqrstuvwxyz"
     tokenizer = CharTokenizer(list(text))
 
@@ -29,7 +30,7 @@ def test_generator_output_length():
     generator = Generator(model, tokenizer, device=torch.device("cpu"))
 
     prompt = "abc"
-    tokens = list(generator.stream_generate(prompt, max_new_tokens=10, temperature=0.8))
+    tokens = list(generator.stream_generate(prompt, max_new_tokens=10, temperature=0.8, stop_on_eos=False))
     assert len(tokens) == 10
 
 
