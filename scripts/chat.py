@@ -86,7 +86,10 @@ def main():
                 prompt_text = user_input
 
             console.print("[bold green]ParagAI:[/bold green] ", end="")
-            accumulated = ""
+            stop_markers = ["<|im_end|>", "<|endoftext|>", "\nUser:", "<|im_start|>"]
+            max_stop_len = max(len(w) for w in stop_markers)
+            stream_buf = ""
+
             for token in generator.stream_generate(
                 prompt=prompt_text,
                 max_new_tokens=args.max_tokens,
@@ -94,17 +97,32 @@ def main():
                 top_k=args.top_k,
                 top_p=args.top_p,
             ):
-                accumulated += token
-                # Check for stop markers
-                if "<|im_end|>" in accumulated:
-                    # Print any text before the marker and stop
-                    before = token.split("<|im_end|>")[0]
-                    if before:
-                        console.print(before, end="", highlight=False)
+                stream_buf += token
+
+                # If any stop marker is detected, print only the clean prefix and terminate
+                matched_stop = False
+                for sm in stop_markers:
+                    if sm in stream_buf:
+                        clean_lead = stream_buf.split(sm)[0]
+                        if clean_lead:
+                            console.print(clean_lead, end="", highlight=False)
+                        stream_buf = ""
+                        matched_stop = True
+                        break
+                if matched_stop:
                     break
-                if "\nUser:" in accumulated or "\n<|im_start|>" in accumulated:
-                    break
-                console.print(token, end="", highlight=False)
+
+                # Flush characters that cannot be part of any trailing stop marker
+                while len(stream_buf) > max_stop_len:
+                    console.print(stream_buf[0], end="", highlight=False)
+                    stream_buf = stream_buf[1:]
+
+            # Flush remaining buffer excluding stop markers
+            if stream_buf:
+                for sm in stop_markers:
+                    stream_buf = stream_buf.split(sm)[0]
+                if stream_buf:
+                    console.print(stream_buf, end="", highlight=False)
             console.print()
 
         except KeyboardInterrupt:
