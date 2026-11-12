@@ -28,6 +28,7 @@ def main():
     parser.add_argument("--top_k", type=int, default=40, help="Top-k filtering threshold")
     parser.add_argument("--top_p", type=float, default=0.9, help="Top-p nucleus sampling threshold")
     parser.add_argument("--max_tokens", type=int, default=150, help="Maximum new tokens to generate")
+    parser.add_argument("--chatml", action="store_true", default=True, help="Use ChatML formatting for prompt")
     args = parser.parse_args()
 
     if not os.path.exists(args.checkpoint):
@@ -78,14 +79,31 @@ def main():
             if not user_input.strip():
                 continue
 
+            # Format with ChatML if requested
+            if args.chatml:
+                prompt_text = f"<|im_start|>user\n{user_input}<|im_end|>\n<|im_start|>assistant\n"
+            else:
+                prompt_text = user_input
+
             console.print("[bold green]ParagAI:[/bold green] ", end="")
+            accumulated = ""
             for token in generator.stream_generate(
-                prompt=user_input,
+                prompt=prompt_text,
                 max_new_tokens=args.max_tokens,
                 temperature=args.temperature,
                 top_k=args.top_k,
                 top_p=args.top_p,
             ):
+                accumulated += token
+                # Check for stop markers
+                if "<|im_end|>" in accumulated:
+                    # Print any text before the marker and stop
+                    before = token.split("<|im_end|>")[0]
+                    if before:
+                        console.print(before, end="", highlight=False)
+                    break
+                if "\nUser:" in accumulated or "\n<|im_start|>" in accumulated:
+                    break
                 console.print(token, end="", highlight=False)
             console.print()
 
