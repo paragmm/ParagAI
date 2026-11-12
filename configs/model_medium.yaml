@@ -1,0 +1,13 @@
+# ParagAI Medium Architecture Configuration (18.5M Parameters)
+model:
+  name: "ParagAI-Medium"
+  vocab_size: 4096
+  max_seq_len: 512
+  n_embd: 384
+  n_head: 8
+  n_layer: 8
+  dropout: 0.1
+  bias: false
+  rms_norm_eps: 1.0e-5
+  rope_theta: 10000.0
+
