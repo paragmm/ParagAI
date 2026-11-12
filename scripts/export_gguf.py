@@ -58,11 +58,38 @@ def convert_to_gguf(
     writer.add_rope_dimension_count(config["hidden_size"] // config["num_attention_heads"])
 
     # 2. Tokenizer metadata
-    writer.add_tokenizer_model("llama")
+    tok_type = tok_data.get("type", "char")
+    writer.add_tokenizer_model("gpt2")
+
+    token_types = []
+    for i, tok in enumerate(tokens):
+        if i in (0, 2, 3):  # pad, bos, eos
+            token_types.append(int(gguf.TokenType.CONTROL))
+        elif i == 1:  # unk
+            token_types.append(int(gguf.TokenType.UNKNOWN))
+        else:
+            token_types.append(int(gguf.TokenType.NORMAL))
+
     writer.add_token_list(tokens)
+    writer.add_token_types(token_types)
+    writer.add_token_scores([0.0] * len(tokens))
+
+    # Add merges if BPE, or dummy merge if character-level (llama.cpp requires tokenizer.ggml.merges for gpt2)
+    merges_list = []
+    if tok_type == "bpe" and "merges" in tok_data:
+        for (p0, p1) in tok_data["merges"]:
+            t0 = tok_data["vocab"].get(str(p0), "")
+            t1 = tok_data["vocab"].get(str(p1), "")
+            merges_list.append(f"{t0} {t1}")
+    if not merges_list:
+        merges_list = ["<pad> <unk>"]
+
+    writer.add_token_merges(merges_list)
+
     writer.add_bos_token_id(2)
     writer.add_eos_token_id(3)
     writer.add_pad_token_id(0)
+    writer.add_unk_token_id(1)
 
     # 3. Tensors mapped to GGUF standard llama naming convention
     tensor_map = gguf.get_tensor_name_map(gguf.MODEL_ARCH.LLAMA, config["num_hidden_layers"])
