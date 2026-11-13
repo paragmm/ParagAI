@@ -240,3 +240,4 @@ After each successful training iteration:
 2. `scripts/prepare_tinystories_sft.py`: Programmatic ChatML instruction synthesizer with replay buffer.
 3. `configs/sft_config.yaml`: Dedicated fine-tuning configuration with tuned learning rate ($2 \times 10^{-4}$).
 4. `.plans/07_tinystories_instruction_tuning_plan_bn.md`: Complete Bengali reference mirror.
+
