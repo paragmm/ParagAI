@@ -373,6 +373,22 @@ class Trainer:
                 tokens_processed=tokens_per_step,
             )
 
+            # Live progress feedback for terminal & notebooks
+            if self._is_main and (step == 0 or (step + 1) % 25 == 0 or (step + 1) == self.config.max_iters):
+                vram_gb = 0.0
+                if torch.cuda.is_available():
+                    vram_gb = torch.cuda.memory_allocated() / (1024**3)
+                tok_sec = self._telemetry.tokens_per_sec
+                step_loss = accumulated_loss * grad_accum
+                print(
+                    f"🚀 [Step {step + 1:4d}/{self.config.max_iters}] "
+                    f"Loss: {step_loss:.4f} | "
+                    f"LR: {current_lr:.2e} | "
+                    f"Speed: {tok_sec:,.0f} tok/s | "
+                    f"VRAM: {vram_gb:.1f} GB",
+                    flush=True,
+                )
+
         # ------------------------------------------------------------------ #
         # Final checkpoint                                                      #
         # ------------------------------------------------------------------ #
