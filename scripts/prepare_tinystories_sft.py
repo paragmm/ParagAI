@@ -166,17 +166,12 @@ _ENDOFTEXT_RE = re.compile(r"<\|endoftext\|>")
 
 def parse_stories(raw: str) -> list[str]:
     """Split *raw* text into individual story strings."""
-    # First split on <|endoftext|>
-    parts = _ENDOFTEXT_RE.split(raw)
-    stories: list[str] = []
-    for part in parts:
-        # Within each part, split further on double newlines.
-        candidates = re.split(r"\n{2,}", part)
-        for c in candidates:
-            s = c.strip()
-            if s:
-                stories.append(s)
-    return stories
+    if "<|endoftext|>" in raw:
+        parts = _ENDOFTEXT_RE.split(raw)
+        return [p.strip() for p in parts if p.strip()]
+    # Fallback: split on multi-newlines for plain text files
+    candidates = re.split(r"\n{2,}", raw)
+    return [c.strip() for c in candidates if c.strip()]
 
 
 # ---------------------------------------------------------------------------
@@ -205,18 +200,19 @@ REPLAY_FILES = [
 
 
 def load_replay_examples(workspace_root: Path) -> list[str]:
-    """Load lines from known replay SFT files; skip files that don't exist."""
-    lines: list[str] = []
+    """Load complete conversation blocks from known replay SFT files."""
+    blocks: list[str] = []
     for rel_path in REPLAY_FILES:
         p = workspace_root / rel_path
         if not p.exists():
             print(f"[replay] {rel_path} not found — skipping.", file=sys.stderr)
             continue
         with p.open("r", encoding="utf-8") as fh:
-            file_lines = [ln.rstrip("\n") for ln in fh if ln.strip()]
-        print(f"[replay] loaded {len(file_lines):,} lines from {rel_path}")
-        lines.extend(file_lines)
-    return lines
+            content = fh.read()
+        file_blocks = [b.strip() for b in re.split(r"\n\s*\n", content) if b.strip()]
+        print(f"[replay] loaded {len(file_blocks):,} conversation blocks from {rel_path}")
+        blocks.extend(file_blocks)
+    return blocks
 
 
 # ---------------------------------------------------------------------------
