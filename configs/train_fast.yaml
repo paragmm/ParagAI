@@ -1,0 +1,16 @@
+training:
+  batch_size: 64
+  learning_rate: 2.0e-4
+  min_lr: 2.0e-5
+  warmup_iters: 50
+  max_iters: 3000
+  weight_decay: 0.1
+  grad_clip: 1.0
+  eval_interval: 250
+  eval_iters: 50
+  grad_accum_steps: 4
+  use_compile: false
+  use_amp: false
+  device: "auto"
+  checkpoint_dir: "checkpoints"
+  data_dir: "data/processed"

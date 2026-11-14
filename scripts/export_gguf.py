@@ -88,9 +88,17 @@ def convert_to_gguf(
     writer.add_token_scores([0.0] * len(tokens))
 
     # Add merges if BPE, or dummy merge if character-level (llama.cpp requires tokenizer.ggml.merges for gpt2)
+    # Supports two merge formats:
+    #   BPETokenizer  : list of {"pair": [p0, p1], "new_id": n}
+    #   IndicBPETokenizer: list of [p0, p1, new_id]
     merges_list = []
+    tokenizer_class = tok_data.get("tokenizer_class", "")
     if tok_type == "bpe" and "merges" in tok_data:
-        for (p0, p1) in tok_data["merges"]:
+        for entry in tok_data["merges"]:
+            if isinstance(entry, dict):
+                p0, p1 = entry["pair"]
+            else:
+                p0, p1 = entry[0], entry[1]
             t0 = tok_data["vocab"].get(str(p0), "")
             t1 = tok_data["vocab"].get(str(p1), "")
             merges_list.append(f"{t0} {t1}")
