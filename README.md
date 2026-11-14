@@ -125,7 +125,9 @@ ParagAI/
 │   └── Modelfile             # Ollama Modelfile (ChatML template)
 ├── document/                 # Tutorials and guides
 ├── notebooks/
-│   └── train_colab.ipynb     # Google Colab notebook
+│   ├── train_colab.ipynb     # Google Colab GPU/TPU notebook
+│   ├── train_local_gpu.ipynb # Local NVIDIA GPU notebook
+│   └── train_local_cpu.ipynb # Local CPU notebook
 ├── scripts/
 │   ├── doctor.py             # Pre-flight diagnostic checker
 │   ├── train.py              # Main training script
