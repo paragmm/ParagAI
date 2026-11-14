@@ -1,7 +1,7 @@
 # Comprehensive Technical Comparison Report (v2.0): ParagAI vs. Karpathy's Nanochat
 ## Technology Parity, Indic Evolution, and Edge Supremacy
 
-**Document ID:** `REPORT-02` (Post-Plan 08 Upgrade)  
+**Document ID:** `REPORT-01` (v2.0 - Post-Plan 08 Upgrade)  
 **Author:** AI Architecture & Research Lead  
 **Date:** November 14, 2026  
 **Reference Repositories:**  
