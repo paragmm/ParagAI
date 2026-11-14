@@ -230,3 +230,4 @@ To build a model that genuinely assists you in daily work (coding, writing, rese
    - Model loads and serves in **vLLM** via `vllm serve checkpoints/export_hf` with zero tensor shape errors.
 3. **Multilingual Proficiency:** Flawlessly responds to prompts in English, Bengali, and Hindi without token fragmentation crashes.
 4. **Tool Reliability:** Continues generating valid structured JSON commands for automation tasks when requested.
+
