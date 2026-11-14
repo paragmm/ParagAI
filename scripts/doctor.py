@@ -26,6 +26,7 @@ Checks performed
 from __future__ import annotations
 
 import json
+import os
 import platform
 import sys
 import urllib.error
@@ -254,17 +255,17 @@ def check_checkpoint(
     if not checkpoint_path.exists():
         return CheckResult(
             name=name,
-            passed=False,
+            passed=True,
             critical=False,
-            detail=f"{checkpoint_path} not found — skipping",
+            detail="No checkpoint yet — ready for fresh training (train with step 5/6)",
             warning=True,
         )
     if not config_path.exists():
         return CheckResult(
             name=name,
-            passed=False,
+            passed=True,
             critical=False,
-            detail=f"{config_path} not found — skipping",
+            detail=f"{config_path.name} not found — skipping shape check",
             warning=True,
         )
 
@@ -417,6 +418,7 @@ def check_ollama() -> CheckResult:
     """Check whether the Ollama service is reachable at http://127.0.0.1:11434."""
     name = "Ollama service"
     url = "http://127.0.0.1:11434"
+    is_cloud = "COLAB_GPU" in os.environ or os.path.exists("/content")
     try:
         with urllib.request.urlopen(url, timeout=2) as resp:
             body: str = resp.read(256).decode("utf-8", errors="replace")
@@ -427,19 +429,27 @@ def check_ollama() -> CheckResult:
             detail=f"Reachable ({body[:40].strip()!r})",
         )
     except urllib.error.URLError as exc:
+        if is_cloud:
+            detail = "Cloud environment — export GGUF & run on local PC (optional)"
+        else:
+            detail = f"Not reachable ({exc.reason}) — optional for local serving"
         return CheckResult(
             name=name,
-            passed=False,
+            passed=True,
             critical=False,
-            detail=f"Not reachable: {exc.reason}",
+            detail=detail,
             warning=True,
         )
     except Exception as exc:  # noqa: BLE001
+        if is_cloud:
+            detail = "Cloud environment — export GGUF & run on local PC (optional)"
+        else:
+            detail = f"Not running ({exc}) — optional for local serving"
         return CheckResult(
             name=name,
-            passed=False,
+            passed=True,
             critical=False,
-            detail=f"Error: {exc}",
+            detail=detail,
             warning=True,
         )
 
@@ -455,9 +465,9 @@ def check_vllm() -> CheckResult:
     except ImportError:
         return CheckResult(
             name=name,
-            passed=False,
+            passed=True,
             critical=False,
-            detail="vllm not installed (optional for local serving)",
+            detail="vllm not installed (optional for cloud server API)",
             warning=True,
         )
 
@@ -469,7 +479,7 @@ def check_vllm() -> CheckResult:
 
 def _symbol(result: CheckResult) -> str:
     """Return the appropriate symbol for *result*."""
-    if result.passed and result.warning:
+    if result.warning:
         return WARN_SYM
     return PASS_SYM if result.passed else FAIL_SYM
 
@@ -489,10 +499,10 @@ def _print_summary_rich(results: list[CheckResult]) -> None:
 
     for r in results:
         sym = _symbol(r)
-        if r.passed and not r.warning:
-            status_style = "green"
-        elif r.warning:
+        if r.warning:
             status_style = "yellow"
+        elif r.passed:
+            status_style = "green"
         else:
             status_style = "red"
 
@@ -518,10 +528,10 @@ def _print_summary_ansi(results: list[CheckResult]) -> None:
     print(sep)
     for r in results:
         sym = _symbol(r)
-        if r.passed and not r.warning:
-            sym_col = _ansi(sym, _GREEN)
-        elif r.warning:
+        if r.warning:
             sym_col = _ansi(sym, _YELLOW)
+        elif r.passed:
+            sym_col = _ansi(sym, _GREEN)
         else:
             sym_col = _ansi(sym, _RED)
 
