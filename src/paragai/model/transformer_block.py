@@ -1,12 +1,12 @@
 """Residual Transformer Decoder Block with KV-Cache pass-through."""
 
-from typing import Optional, Tuple
 import torch
-import torch.nn as nn
+from torch import nn
+
 from paragai.config import ModelConfig
-from paragai.model.normalization import RMSNorm
 from paragai.model.attention import CausalSelfAttention
 from paragai.model.feed_forward import SwiGLUFeedForward
+from paragai.model.normalization import RMSNorm
 
 
 class TransformerBlock(nn.Module):
@@ -22,10 +22,10 @@ class TransformerBlock(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        freqs_cis: Optional[torch.Tensor] = None,
-        kv_cache: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        freqs_cis: torch.Tensor | None = None,
+        kv_cache: tuple[torch.Tensor, torch.Tensor] | None = None,
         use_cache: bool = False,
-    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor] | None]:
         # Pre-norm architecture with residual stream
         attn_out, new_cache = self.attn(
             self.norm1(x),

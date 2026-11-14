@@ -1,9 +1,8 @@
 """Dataset loaders and dynamic batching for autoregressive language modeling."""
 
-import os
-from typing import Tuple, Optional
-import torch
 import numpy as np
+import torch
+
 from paragai.tokenizer.base import BaseTokenizer
 
 
@@ -50,7 +49,7 @@ class TextDataset:
         batch_size: int,
         seq_len: int,
         device: torch.device,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Sample a batch of inputs X and targets Y where Y is X shifted by 1."""
         data = self.train_data if split == "train" else self.val_data
         if len(data) <= seq_len:
@@ -68,4 +67,3 @@ class TextDataset:
         y_tensor = torch.tensor(y_batch, dtype=torch.long, device=device)
 
         return x_tensor, y_tensor
-

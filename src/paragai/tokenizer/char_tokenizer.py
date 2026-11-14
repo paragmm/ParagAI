@@ -1,14 +1,14 @@
 """Character-level tokenizer for ParagAI."""
 
 import json
-from typing import List, Dict, Optional
+
 from paragai.tokenizer.base import BaseTokenizer
 
 
 class CharTokenizer(BaseTokenizer):
     """Simple, deterministic character-level tokenizer."""
 
-    def __init__(self, chars: Optional[List[str]] = None):
+    def __init__(self, chars: list[str] | None = None):
         self.special_tokens = [
             self.PAD_TOKEN,
             self.UNK_TOKEN,
@@ -17,15 +17,15 @@ class CharTokenizer(BaseTokenizer):
         ]
 
         # Initialize with special tokens
-        self.stoi: Dict[str, int] = {tok: idx for idx, tok in enumerate(self.special_tokens)}
-        self.itos: Dict[int, str] = {idx: tok for idx, tok in enumerate(self.special_tokens)}
+        self.stoi: dict[str, int] = {tok: idx for idx, tok in enumerate(self.special_tokens)}
+        self.itos: dict[int, str] = {idx: tok for idx, tok in enumerate(self.special_tokens)}
 
         if chars:
             self.build_vocab(chars)
 
-    def build_vocab(self, chars: List[str]) -> None:
+    def build_vocab(self, chars: list[str]) -> None:
         """Add unique characters to vocabulary."""
-        unique_chars = sorted(list(set(chars)))
+        unique_chars = sorted(set(chars))
         for ch in unique_chars:
             if ch not in self.stoi:
                 idx = len(self.stoi)
@@ -36,7 +36,7 @@ class CharTokenizer(BaseTokenizer):
     def vocab_size(self) -> int:
         return len(self.stoi)
 
-    def encode(self, text: str, add_special_tokens: bool = False) -> List[int]:
+    def encode(self, text: str, add_special_tokens: bool = False) -> list[int]:
         tokens = []
         if add_special_tokens:
             tokens.append(self.BOS_ID)
@@ -49,7 +49,7 @@ class CharTokenizer(BaseTokenizer):
 
         return tokens
 
-    def decode(self, ids: List[int], skip_special_tokens: bool = False) -> str:
+    def decode(self, ids: list[int], skip_special_tokens: bool = False) -> str:
         res = []
         for i in ids:
             if skip_special_tokens and i in (self.PAD_ID, self.UNK_ID, self.BOS_ID, self.EOS_ID):
@@ -74,4 +74,3 @@ class CharTokenizer(BaseTokenizer):
         tok.stoi = data["stoi"]
         tok.itos = {int(k): v for k, v in data["itos"].items()}
         return tok
-

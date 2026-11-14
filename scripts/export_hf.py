@@ -15,7 +15,6 @@ import argparse
 import json
 import os
 import sys
-from typing import Dict, Tuple
 
 import torch
 from safetensors.torch import save_file
@@ -43,6 +42,7 @@ CHATML_TEMPLATE = (
 # Tensor key mapping
 # ---------------------------------------------------------------------------
 
+
 def _map_key(key: str) -> str | None:
     """Map a ParagAI state-dict key to its HuggingFace/LLaMA equivalent.
 
@@ -60,7 +60,7 @@ def _map_key(key: str) -> str | None:
         block_idx = parts[1]
         sub_key = ".".join(parts[2:])
 
-        mapping: Dict[str, str] = {
+        mapping: dict[str, str] = {
             "norm1.weight": f"model.layers.{block_idx}.input_layernorm.weight",
             "norm2.weight": f"model.layers.{block_idx}.post_attention_layernorm.weight",
             "attn.q_proj.weight": f"model.layers.{block_idx}.self_attn.q_proj.weight",
@@ -80,6 +80,7 @@ def _map_key(key: str) -> str | None:
 # Core conversion
 # ---------------------------------------------------------------------------
 
+
 def convert_checkpoint_to_hf(checkpoint_path: str, output_dir: str, verify: bool = False) -> None:
     """Export a ParagAI .pt checkpoint to HuggingFace SafeTensors + JSON configs.
 
@@ -93,11 +94,11 @@ def convert_checkpoint_to_hf(checkpoint_path: str, output_dir: str, verify: bool
 
     print(f"\n[export_hf] Loading checkpoint: {checkpoint_path}")
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
-    model_config: Dict = checkpoint["model_config"]
-    state_dict: Dict[str, torch.Tensor] = checkpoint["model_state_dict"]
+    model_config: dict = checkpoint["model_config"]
+    state_dict: dict[str, torch.Tensor] = checkpoint["model_state_dict"]
 
     # ---- tensor key remapping ------------------------------------------------
-    hf_tensors: Dict[str, torch.Tensor] = {}
+    hf_tensors: dict[str, torch.Tensor] = {}
     for key, tensor in state_dict.items():
         hf_key = _map_key(key)
         if hf_key is not None:
@@ -240,6 +241,7 @@ def convert_checkpoint_to_hf(checkpoint_path: str, output_dir: str, verify: bool
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _write_json(data: dict, directory: str, filename: str) -> None:
     """Serialise *data* as pretty-printed JSON to ``directory/filename``."""
     path = os.path.join(directory, filename)
@@ -248,15 +250,15 @@ def _write_json(data: dict, directory: str, filename: str) -> None:
     print(f"[export_hf] Wrote {filename} → {path}")
 
 
-def _print_tensor_table(tensors: Dict[str, torch.Tensor]) -> None:
+def _print_tensor_table(tensors: dict[str, torch.Tensor]) -> None:
     """Print a formatted table of exported tensor names and shapes."""
     col_key = max((len(k) for k in tensors), default=10)
     col_shape = 30
     col_dtype = 12
-    separator = "+" + "-" * (col_key + 2) + "+" + "-" * (col_shape + 2) + "+" + "-" * (col_dtype + 2) + "+"
-    header = (
-        f"| {'Tensor Key':<{col_key}} | {'Shape':<{col_shape}} | {'DType':<{col_dtype}} |"
+    separator = (
+        "+" + "-" * (col_key + 2) + "+" + "-" * (col_shape + 2) + "+" + "-" * (col_dtype + 2) + "+"
     )
+    header = f"| {'Tensor Key':<{col_key}} | {'Shape':<{col_shape}} | {'DType':<{col_dtype}} |"
     print("\n" + separator)
     print(header)
     print(separator)
@@ -268,7 +270,7 @@ def _print_tensor_table(tensors: Dict[str, torch.Tensor]) -> None:
     print(f"  Total tensors exported: {len(tensors)}\n")
 
 
-def _verify_safetensors(path: str, original: Dict[str, torch.Tensor]) -> None:
+def _verify_safetensors(path: str, original: dict[str, torch.Tensor]) -> None:
     """Reload the SafeTensors file and verify every tensor matches the original.
 
     Args:
@@ -320,25 +322,26 @@ def _print_vllm_instructions(output_dir: str) -> None:
     print(sep)
     print("  vLLM Serve Instructions")
     print(sep)
-    print(f"\n  1. Install vLLM (if not already):")
-    print(f"       pip install vllm\n")
-    print(f"  2. Start the server:")
+    print("\n  1. Install vLLM (if not already):")
+    print("       pip install vllm\n")
+    print("  2. Start the server:")
     print(f"       vllm serve {output_dir} \\")
-    print(f"         --port 8000 \\")
-    print(f"         --host 0.0.0.0 \\")
-    print(f"         --tensor-parallel-size 1 \\")
-    print(f"         --max-model-len 256 \\")
-    print(f"         --dtype bfloat16\n")
-    print(f"  3. Query (example):")
-    print(f"       curl http://localhost:8000/v1/completions \\")
-    print(f'         -H "Content-Type: application/json" \\')
-    print(f"         -d '{{\"model\": \"{output_dir}\", \"prompt\": \"Hello\", \"max_tokens\": 64}}'\n")
+    print("         --port 8000 \\")
+    print("         --host 0.0.0.0 \\")
+    print("         --tensor-parallel-size 1 \\")
+    print("         --max-model-len 256 \\")
+    print("         --dtype bfloat16\n")
+    print("  3. Query (example):")
+    print("       curl http://localhost:8000/v1/completions \\")
+    print('         -H "Content-Type: application/json" \\')
+    print(f'         -d \'{{"model": "{output_dir}", "prompt": "Hello", "max_tokens": 64}}\'\n')
     print(sep + "\n")
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Entry point."""

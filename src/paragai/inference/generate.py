@@ -1,16 +1,20 @@
 """Autoregressive text generation pipeline with Key-Value (KV) Caching."""
 
-from typing import Optional, Iterator
+from collections.abc import Iterator
+
 import torch
+
+from paragai.inference.sampler import sample_next_token
 from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.base import BaseTokenizer
-from paragai.inference.sampler import sample_next_token
 
 
 class Generator:
     """Manages high-speed text generation using KV-Caching from a trained ParagAI model."""
 
-    def __init__(self, model: ParagAIModel, tokenizer: BaseTokenizer, device: Optional[torch.device] = None):
+    def __init__(
+        self, model: ParagAIModel, tokenizer: BaseTokenizer, device: torch.device | None = None
+    ):
         self.model = model
         self.tokenizer = tokenizer
         self.device = device or next(model.parameters()).device
@@ -23,15 +27,15 @@ class Generator:
         prompt: str,
         max_new_tokens: int = 100,
         temperature: float = 0.8,
-        top_k: Optional[int] = 40,
-        top_p: Optional[float] = 0.9,
+        top_k: int | None = 40,
+        top_p: float | None = 0.9,
         repetition_penalty: float = 1.1,
         stop_on_eos: bool = True,
         use_cache: bool = True,
         include_prompt: bool = True,
     ) -> str:
         """Generate text continuation from a prompt with optional KV-caching.
-        
+
         Args:
             prompt: Input text prompt.
             max_new_tokens: Maximum number of new tokens to generate.
@@ -67,7 +71,9 @@ class Generator:
         )
 
         if stop_on_eos and next_token == self.tokenizer.EOS_ID:
-            return self.tokenizer.decode(generated if include_prompt else generated[len(token_ids):])
+            return self.tokenizer.decode(
+                generated if include_prompt else generated[len(token_ids) :]
+            )
 
         generated.append(next_token)
 
@@ -79,7 +85,9 @@ class Generator:
 
             if use_cache:
                 # O(1) step: feed only the single new token into the network
-                logits, _, kv_caches = self.model(curr_token, past_kv_caches=kv_caches, use_cache=True)
+                logits, _, kv_caches = self.model(
+                    curr_token, past_kv_caches=kv_caches, use_cache=True
+                )
                 next_logits = logits[0, -1, :].clone()
             else:
                 x_full = torch.tensor([generated], dtype=torch.long, device=self.device)
@@ -101,7 +109,7 @@ class Generator:
             generated.append(next_token)
             curr_token = torch.tensor([[next_token]], dtype=torch.long, device=self.device)
 
-        return self.tokenizer.decode(generated if include_prompt else generated[len(token_ids):])
+        return self.tokenizer.decode(generated if include_prompt else generated[len(token_ids) :])
 
     @torch.no_grad()
     def stream_generate(
@@ -109,8 +117,8 @@ class Generator:
         prompt: str,
         max_new_tokens: int = 100,
         temperature: float = 0.8,
-        top_k: Optional[int] = 40,
-        top_p: Optional[float] = 0.9,
+        top_k: int | None = 40,
+        top_p: float | None = 0.9,
         repetition_penalty: float = 1.1,
         stop_on_eos: bool = True,
     ) -> Iterator[str]:

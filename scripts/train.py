@@ -9,26 +9,38 @@ sys.path.insert(0, repo_root)
 sys.path.insert(0, os.path.join(repo_root, "src"))
 
 import argparse
+
 import yaml
-import torch
+
 from paragai.config import ModelConfig, TrainConfig
 from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.bpe_tokenizer import BPETokenizer
 from paragai.tokenizer.char_tokenizer import CharTokenizer
 from paragai.training.dataset import TextDataset
 from paragai.training.trainer import Trainer
-from paragai.utils.seed import set_seed
 from paragai.utils.logger import get_logger
+from paragai.utils.seed import set_seed
 
 logger = get_logger("TrainScript")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Train a ParagAI language model")
-    parser.add_argument("--config", type=str, default="configs/train_config.yaml", help="Path to train config YAML")
-    parser.add_argument("--model_config", type=str, default="configs/model_small.yaml", help="Path to model config YAML")
-    parser.add_argument("--data", type=str, default="data/raw/input.txt", help="Path to training text file")
-    parser.add_argument("--tokenizer_type", type=str, choices=["char", "bpe"], default="char", help="Tokenizer type")
+    parser.add_argument(
+        "--config", type=str, default="configs/train_config.yaml", help="Path to train config YAML"
+    )
+    parser.add_argument(
+        "--model_config",
+        type=str,
+        default="configs/model_small.yaml",
+        help="Path to model config YAML",
+    )
+    parser.add_argument(
+        "--data", type=str, default="data/raw/input.txt", help="Path to training text file"
+    )
+    parser.add_argument(
+        "--tokenizer_type", type=str, choices=["char", "bpe"], default="char", help="Tokenizer type"
+    )
     parser.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     args = parser.parse_args()
@@ -50,7 +62,9 @@ def main():
         except ImportError:
             from prepare_data import merge_categorized_files
         processed_file = "data/processed/combined_corpus.txt"
-        logger.info(f"Directory detected at '{args.data}'. Merging all files into '{processed_file}'...")
+        logger.info(
+            f"Directory detected at '{args.data}'. Merging all files into '{processed_file}'..."
+        )
         merge_categorized_files(raw_dir=args.data, output_file=processed_file)
         args.data = processed_file
 
@@ -100,4 +114,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

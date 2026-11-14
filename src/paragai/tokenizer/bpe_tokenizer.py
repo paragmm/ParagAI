@@ -1,8 +1,9 @@
 """Byte-Pair Encoding (BPE) subword tokenizer for ParagAI."""
 
+import itertools
 import json
 from collections import defaultdict
-from typing import List, Dict, Tuple, Optional
+
 from paragai.tokenizer.base import BaseTokenizer
 
 
@@ -18,8 +19,8 @@ class BPETokenizer(BaseTokenizer):
             self.EOS_TOKEN,
         ]
 
-        self.vocab: Dict[int, bytes] = {}
-        self.merges: Dict[Tuple[int, int], int] = {}
+        self.vocab: dict[int, bytes] = {}
+        self.merges: dict[tuple[int, int], int] = {}
 
         # Initialize base 256 byte tokens after special tokens
         for idx, tok in enumerate(self.special_tokens):
@@ -33,14 +34,14 @@ class BPETokenizer(BaseTokenizer):
         return len(self.vocab)
 
     @staticmethod
-    def get_stats(ids: List[int]) -> Dict[Tuple[int, int], int]:
+    def get_stats(ids: list[int]) -> dict[tuple[int, int], int]:
         counts = defaultdict(int)
-        for p0, p1 in zip(ids, ids[1:]):
+        for p0, p1 in itertools.pairwise(ids):
             counts[(p0, p1)] += 1
         return counts
 
     @staticmethod
-    def merge(ids: List[int], pair: Tuple[int, int], new_id: int) -> List[int]:
+    def merge(ids: list[int], pair: tuple[int, int], new_id: int) -> list[int]:
         new_ids = []
         i = 0
         while i < len(ids):
@@ -75,7 +76,7 @@ class BPETokenizer(BaseTokenizer):
             if verbose and (i + 1) % 50 == 0:
                 print(f"Merge {i + 1}/{num_merges}: {best_pair} -> {new_id}")
 
-    def encode(self, text: str, add_special_tokens: bool = False) -> List[int]:
+    def encode(self, text: str, add_special_tokens: bool = False) -> list[int]:
         raw_bytes = list(text.encode("utf-8"))
         offset = len(self.special_tokens)
         ids = [b + offset for b in raw_bytes]
@@ -93,7 +94,7 @@ class BPETokenizer(BaseTokenizer):
             return [self.BOS_ID] + ids + [self.EOS_ID]
         return ids
 
-    def decode(self, ids: List[int], skip_special_tokens: bool = False) -> str:
+    def decode(self, ids: list[int], skip_special_tokens: bool = False) -> str:
         byte_parts = []
         for i in ids:
             if skip_special_tokens and i in (self.PAD_ID, self.UNK_ID, self.BOS_ID, self.EOS_ID):
@@ -110,12 +111,9 @@ class BPETokenizer(BaseTokenizer):
             "type": "bpe",
             "target_vocab_size": self.target_vocab_size,
             "merges": [
-                {"pair": [int(p[0]), int(p[1])], "new_id": int(v)}
-                for p, v in self.merges.items()
+                {"pair": [int(p[0]), int(p[1])], "new_id": int(v)} for p, v in self.merges.items()
             ],
-            "vocab": {
-                str(k): list(v) for k, v in self.vocab.items()
-            },
+            "vocab": {str(k): list(v) for k, v in self.vocab.items()},
         }
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -128,8 +126,6 @@ class BPETokenizer(BaseTokenizer):
         tok = cls(vocab_size=data["target_vocab_size"])
         tok.vocab = {int(k): bytes(v) for k, v in data["vocab"].items()}
         tok.merges = {
-            (int(m["pair"][0]), int(m["pair"][1])): int(m["new_id"])
-            for m in data["merges"]
+            (int(m["pair"][0]), int(m["pair"][1])): int(m["new_id"]) for m in data["merges"]
         }
         return tok
-

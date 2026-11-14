@@ -22,4 +22,3 @@ def test_config_initialization():
 
 def test_seed_determinism():
     set_seed(42)
-

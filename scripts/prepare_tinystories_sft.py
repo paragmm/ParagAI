@@ -19,22 +19,17 @@ python scripts/prepare_tinystories_sft.py \\
 from __future__ import annotations
 
 import argparse
-import os
 import random
 import re
 import sys
 import warnings
 from pathlib import Path
-from typing import List, Optional
-
 
 # ---------------------------------------------------------------------------
 # ChatML template
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = (
-    "You are ParagAI, a creative and imaginative AI storytelling assistant."
-)
+SYSTEM_PROMPT = "You are ParagAI, a creative and imaginative AI storytelling assistant."
 
 CHATML_TEMPLATE = (
     "<|im_start|>system\n"
@@ -49,7 +44,7 @@ CHATML_TEMPLATE = (
 # Prompt bank  (≥20 English, ≥10 Bengali, ≥5 Hindi)
 # ---------------------------------------------------------------------------
 
-ENGLISH_PROMPTS: List[str] = [
+ENGLISH_PROMPTS: list[str] = [
     "Write a story for me.",
     "Tell me a creative story.",
     "Write a short bedtime story.",
@@ -77,7 +72,7 @@ ENGLISH_PROMPTS: List[str] = [
     "Tell me a story with talking animals.",
 ]
 
-BENGALI_PROMPTS: List[str] = [
+BENGALI_PROMPTS: list[str] = [
     "আমাকে একটি গল্প বলো।",
     "একটি সুন্দর ছোট গল্প লেখো।",
     "আমাকে একটি মজার গল্প শোনাও।",
@@ -91,7 +86,7 @@ BENGALI_PROMPTS: List[str] = [
     "একটি বন্ধুত্বের গল্প লেখো।",
 ]
 
-HINDI_PROMPTS: List[str] = [
+HINDI_PROMPTS: list[str] = [
     "एक छोटी कहानी सुनाओ।",
     "मुझे एक रोचक कहानी बताओ।",
     "एक बच्चों की कहानी लिखो।",
@@ -101,7 +96,7 @@ HINDI_PROMPTS: List[str] = [
     "एक जानवरों की कहानी सुनाओ।",
 ]
 
-ALL_BASE_PROMPTS: List[str] = ENGLISH_PROMPTS + BENGALI_PROMPTS + HINDI_PROMPTS
+ALL_BASE_PROMPTS: list[str] = ENGLISH_PROMPTS + BENGALI_PROMPTS + HINDI_PROMPTS
 
 
 # ---------------------------------------------------------------------------
@@ -118,15 +113,29 @@ _NAME_INTRO_RE = re.compile(
 )
 
 
-def _extract_first_name(story: str) -> Optional[str]:
+def _extract_first_name(story: str) -> str | None:
     """Return the first character name found in *story*, or None."""
     m = _NAME_INTRO_RE.search(story[:500])
     if m:
         return m.group(1) or m.group(2)
     # Fallback: first capitalised word that isn't a common story opener.
     _SKIP = {
-        "Once", "There", "The", "A", "An", "In", "On", "One", "It",
-        "He", "She", "They", "We", "His", "Her", "Their",
+        "Once",
+        "There",
+        "The",
+        "A",
+        "An",
+        "In",
+        "On",
+        "One",
+        "It",
+        "He",
+        "She",
+        "They",
+        "We",
+        "His",
+        "Her",
+        "Their",
     }
     for word in story.split():
         clean = re.sub(r"[^A-Za-z]", "", word)
@@ -155,11 +164,11 @@ def _pick_prompt(story: str) -> str:
 _ENDOFTEXT_RE = re.compile(r"<\|endoftext\|>")
 
 
-def parse_stories(raw: str) -> List[str]:
+def parse_stories(raw: str) -> list[str]:
     """Split *raw* text into individual story strings."""
     # First split on <|endoftext|>
     parts = _ENDOFTEXT_RE.split(raw)
-    stories: List[str] = []
+    stories: list[str] = []
     for part in parts:
         # Within each part, split further on double newlines.
         candidates = re.split(r"\n{2,}", part)
@@ -173,6 +182,7 @@ def parse_stories(raw: str) -> List[str]:
 # ---------------------------------------------------------------------------
 # ChatML formatting
 # ---------------------------------------------------------------------------
+
 
 def format_chatml(prompt: str, story: str) -> str:
     """Wrap a (prompt, story) pair in ChatML."""
@@ -194,9 +204,9 @@ REPLAY_FILES = [
 ]
 
 
-def load_replay_examples(workspace_root: Path) -> List[str]:
+def load_replay_examples(workspace_root: Path) -> list[str]:
     """Load lines from known replay SFT files; skip files that don't exist."""
-    lines: List[str] = []
+    lines: list[str] = []
     for rel_path in REPLAY_FILES:
         p = workspace_root / rel_path
         if not p.exists():
@@ -213,13 +223,14 @@ def load_replay_examples(workspace_root: Path) -> List[str]:
 # Main pipeline
 # ---------------------------------------------------------------------------
 
+
 def build_sft_examples(
-    stories: List[str],
-    replay_examples: List[str],
+    stories: list[str],
+    replay_examples: list[str],
     replay_mix: bool,
     replay_ratio: float,
     seed: int = 42,
-) -> List[str]:
+) -> list[str]:
     """
     Combine ChatML-wrapped story examples with optional replay examples.
 
@@ -243,13 +254,13 @@ def build_sft_examples(
     rng = random.Random(seed)
 
     # Format story examples as ChatML
-    story_examples: List[str] = []
+    story_examples: list[str] = []
     for story in stories:
         prompt = _pick_prompt(story)
         story_examples.append(format_chatml(prompt, story))
 
     replay_injected = 0
-    all_examples: List[str] = list(story_examples)
+    all_examples: list[str] = list(story_examples)
 
     if replay_mix and replay_examples:
         n_story = len(story_examples)
@@ -339,7 +350,7 @@ def main() -> None:
     workspace_root = Path(__file__).resolve().parent.parent
 
     # Load replay examples
-    replay_examples: List[str] = []
+    replay_examples: list[str] = []
     if args.replay_mix:
         replay_examples = load_replay_examples(workspace_root)
     else:

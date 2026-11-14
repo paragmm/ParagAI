@@ -26,7 +26,7 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import torch
 
@@ -34,11 +34,12 @@ import torch
 # Lazy imports (model / tokenizer may not be available in every environment)
 # ---------------------------------------------------------------------------
 
+
 def _load_model_and_tokenizer(
     checkpoint_path: str,
     tokenizer_path: str,
     device: str,
-) -> Tuple[Any, Any, Dict]:
+) -> tuple[Any, Any, dict]:
     """Load ParagAI model and tokenizer from checkpoint paths.
 
     Returns:
@@ -51,12 +52,15 @@ def _load_model_and_tokenizer(
             tok_data = json.load(fh)
         if tok_data.get("tokenizer_class") == "indic_bpe":
             from paragai.tokenizer.indic_bpe import IndicBPETokenizer  # type: ignore[import]
+
             tok = IndicBPETokenizer.load(tokenizer_path)
         elif tok_data.get("type") == "bpe":
             from paragai.tokenizer.bpe_tokenizer import BPETokenizer  # type: ignore[import]
+
             tok = BPETokenizer.load(tokenizer_path)
         else:
             from paragai.tokenizer.char_tokenizer import CharTokenizer  # type: ignore[import]
+
             tok = CharTokenizer.load(tokenizer_path)
     except Exception as exc:
         raise RuntimeError(f"Failed to load tokenizer from {tokenizer_path}: {exc}") from exc
@@ -67,13 +71,13 @@ def _load_model_and_tokenizer(
     except Exception as exc:
         raise RuntimeError(f"Failed to load checkpoint from {checkpoint_path}: {exc}") from exc
 
-    model_config: Dict = ckpt["model_config"]
-    state_dict: Dict = ckpt["model_state_dict"]
+    model_config: dict = ckpt["model_config"]
+    state_dict: dict = ckpt["model_state_dict"]
 
     # ---- model ---------------------------------------------------------------
     try:
-        from paragai.model.transformer import ParagAIModel  # type: ignore[import]
         from paragai.config import ModelConfig  # type: ignore[import]
+        from paragai.model.transformer import ParagAIModel  # type: ignore[import]
 
         cfg = ModelConfig(**model_config)
         model = ParagAIModel(cfg)
@@ -93,6 +97,7 @@ def _load_model_and_tokenizer(
 # Generation helper
 # ---------------------------------------------------------------------------
 
+
 @torch.inference_mode()
 def _generate(
     model: Any,
@@ -104,9 +109,11 @@ def _generate(
     device: str = "cpu",
 ) -> str:
     """Run greedy / top-k generation and decode the output."""
-    ids: List[int] = tok.encode(prompt)
+    ids: list[int] = tok.encode(prompt)
     input_ids = torch.tensor([ids], dtype=torch.long, device=device)
-    max_seq = getattr(getattr(model, "config", None), "max_seq_len", getattr(model, "max_seq_len", 256))
+    max_seq = getattr(
+        getattr(model, "config", None), "max_seq_len", getattr(model, "max_seq_len", 256)
+    )
 
     for _ in range(max_new_tokens):
         # truncate to context window
@@ -128,7 +135,7 @@ def _generate(
         if eos_id is not None and next_id.item() == eos_id:
             break
 
-    generated_ids = input_ids[0, len(ids):].tolist()
+    generated_ids = input_ids[0, len(ids) :].tolist()
     return tok.decode(generated_ids)
 
 
@@ -136,12 +143,13 @@ def _generate(
 # Tasks
 # ---------------------------------------------------------------------------
 
+
 def task_perplexity(
     model: Any,
     tok: Any,
-    val_data_path: Optional[str],
+    val_data_path: str | None,
     device: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Compute perplexity on the validation text.
 
     Args:
@@ -161,7 +169,9 @@ def task_perplexity(
     if len(ids) < 2:
         return {"error": "val_data too short after tokenisation", "ppl": None}
 
-    max_seq = getattr(getattr(model, "config", None), "max_seq_len", getattr(model, "max_seq_len", 256))
+    max_seq = getattr(
+        getattr(model, "config", None), "max_seq_len", getattr(model, "max_seq_len", 256)
+    )
     stride = max_seq // 2
     ids_t = torch.tensor(ids, dtype=torch.long, device=device)
 
@@ -179,9 +189,7 @@ def task_perplexity(
             out = model(x)
             logits = out[0] if isinstance(out, tuple) else out
             logits_flat = logits[0].float()  # (T, V)
-            loss = torch.nn.functional.cross_entropy(
-                logits_flat, y, reduction="sum"
-            )
+            loss = torch.nn.functional.cross_entropy(logits_flat, y, reduction="sum")
             total_nll += loss.item()
             n_tokens += len(y)
             if n_tokens >= 50_000:  # cap for speed
@@ -196,7 +204,7 @@ def task_multiling(
     model: Any,
     tok: Any,
     device: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Probe model with 10 prompts per language and report % non-empty responses.
 
     Languages: English, Bengali, Hindi.
@@ -204,7 +212,7 @@ def task_multiling(
     Returns:
         Result dict with per-language and overall non-empty percentages.
     """
-    prompts: Dict[str, List[str]] = {
+    prompts: dict[str, list[str]] = {
         "english": [
             "Hello, how are you?",
             "What is the capital of France?",
@@ -243,7 +251,7 @@ def task_multiling(
         ],
     }
 
-    lang_results: Dict[str, Dict[str, Any]] = {}
+    lang_results: dict[str, dict[str, Any]] = {}
     total_non_empty = 0
     total_prompts = 0
 
@@ -255,7 +263,7 @@ def task_multiling(
                 response = _generate(model, tok, chatml, max_new_tokens=64, device=device)
                 if response.strip():
                     non_empty += 1
-            except Exception:
+            except (RuntimeError, ValueError, KeyError):
                 pass  # crashed = empty
         pct = round(100.0 * non_empty / len(lang_prompts), 1)
         lang_results[lang] = {"non_empty": non_empty, "total": len(lang_prompts), "pct": pct}
@@ -270,7 +278,7 @@ def task_tools(
     model: Any,
     tok: Any,
     device: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Test tool-adherence: check if output contains valid JSON with action+command.
 
     Returns:
@@ -285,7 +293,7 @@ def task_tools(
     ]
 
     valid_json_count = 0
-    details: List[Dict[str, Any]] = []
+    details: list[dict[str, Any]] = []
 
     for prompt in tool_prompts:
         chatml = (
@@ -295,7 +303,7 @@ def task_tools(
         )
         try:
             response = _generate(model, tok, chatml, max_new_tokens=128, device=device)
-        except Exception as exc:
+        except (RuntimeError, ValueError, KeyError) as exc:
             details.append({"prompt": prompt, "valid": False, "error": str(exc)})
             continue
 
@@ -305,7 +313,12 @@ def task_tools(
         details.append({"prompt": prompt, "valid": is_valid, "response_preview": response[:80]})
 
     pct = round(100.0 * valid_json_count / len(tool_prompts), 1)
-    return {"valid_json": valid_json_count, "total": len(tool_prompts), "pct": pct, "details": details}
+    return {
+        "valid_json": valid_json_count,
+        "total": len(tool_prompts),
+        "pct": pct,
+        "details": details,
+    }
 
 
 def _has_tool_json(text: str) -> bool:
@@ -325,7 +338,7 @@ def task_story(
     model: Any,
     tok: Any,
     device: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Probe story generation: check if response begins with a narrative word.
 
     Narrative start words (English + Bengali):
@@ -343,18 +356,23 @@ def task_story(
     ]
 
     narrative_words = {
-        "once", "there", "in", "a", "the",
-        "এক", "একদা",
+        "once",
+        "there",
+        "in",
+        "a",
+        "the",
+        "এক",
+        "একদা",
     }
 
     narrative_count = 0
-    details: List[Dict[str, Any]] = []
+    details: list[dict[str, Any]] = []
 
     for prompt in story_prompts:
         chatml = f"<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
         try:
             response = _generate(model, tok, chatml, max_new_tokens=128, device=device)
-        except Exception as exc:
+        except (RuntimeError, ValueError, KeyError) as exc:
             details.append({"prompt": prompt, "narrative_start": False, "error": str(exc)})
             continue
 
@@ -362,24 +380,32 @@ def task_story(
         is_narrative = first_word in narrative_words
         if is_narrative:
             narrative_count += 1
-        details.append({
-            "prompt": prompt,
-            "narrative_start": is_narrative,
-            "first_word": first_word,
-            "response_preview": response[:80],
-        })
+        details.append(
+            {
+                "prompt": prompt,
+                "narrative_start": is_narrative,
+                "first_word": first_word,
+                "response_preview": response[:80],
+            }
+        )
 
     pct = round(100.0 * narrative_count / len(story_prompts), 1)
-    return {"narrative_starts": narrative_count, "total": len(story_prompts), "pct": pct, "details": details}
+    return {
+        "narrative_starts": narrative_count,
+        "total": len(story_prompts),
+        "pct": pct,
+        "details": details,
+    }
 
 
 # ---------------------------------------------------------------------------
 # Report formatting
 # ---------------------------------------------------------------------------
 
-def _format_markdown_table(results: Dict[str, Any]) -> str:
+
+def _format_markdown_table(results: dict[str, Any]) -> str:
     """Render evaluation results as a GitHub-flavoured Markdown table."""
-    rows: List[Tuple[str, str, str]] = []
+    rows: list[tuple[str, str, str]] = []
 
     if "perplexity" in results:
         r = results["perplexity"]
@@ -392,20 +418,28 @@ def _format_markdown_table(results: Dict[str, Any]) -> str:
         r = results["multiling"]
         overall = r.get("overall_pct", "N/A")
         per_lang = r.get("per_language", {})
-        detail_parts = ", ".join(
-            f"{lang}: {info['pct']}%" for lang, info in per_lang.items()
-        )
+        detail_parts = ", ".join(f"{lang}: {info['pct']}%" for lang, info in per_lang.items())
         rows.append(("Multilingual", f"{overall}% non-empty", detail_parts))
 
     if "tools" in results:
         r = results["tools"]
-        rows.append(("Tool Adherence", f"{r.get('pct', 0)}% valid JSON",
-                      f"{r.get('valid_json', 0)}/{r.get('total', 0)} prompts"))
+        rows.append(
+            (
+                "Tool Adherence",
+                f"{r.get('pct', 0)}% valid JSON",
+                f"{r.get('valid_json', 0)}/{r.get('total', 0)} prompts",
+            )
+        )
 
     if "story" in results:
         r = results["story"]
-        rows.append(("Story Generation", f"{r.get('pct', 0)}% narrative start",
-                      f"{r.get('narrative_starts', 0)}/{r.get('total', 0)} prompts"))
+        rows.append(
+            (
+                "Story Generation",
+                f"{r.get('pct', 0)}% narrative start",
+                f"{r.get('narrative_starts', 0)}/{r.get('total', 0)} prompts",
+            )
+        )
 
     col_widths = (
         max(len(r[0]) for r in rows) if rows else 20,
@@ -416,7 +450,15 @@ def _format_markdown_table(results: Dict[str, Any]) -> str:
     def _row(c0: str, c1: str, c2: str) -> str:
         return f"| {c0:<{col_widths[0]}} | {c1:<{col_widths[1]}} | {c2:<{col_widths[2]}} |"
 
-    separator = "|-" + "-" * col_widths[0] + "-|-" + "-" * col_widths[1] + "-|-" + "-" * col_widths[2] + "-|"
+    separator = (
+        "|-"
+        + "-" * col_widths[0]
+        + "-|-"
+        + "-" * col_widths[1]
+        + "-|-"
+        + "-" * col_widths[2]
+        + "-|"
+    )
     lines = [
         _row("Task", "Score", "Detail"),
         separator,
@@ -427,6 +469,7 @@ def _format_markdown_table(results: Dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Entry point for the evaluation script."""
@@ -482,7 +525,7 @@ def main() -> None:
     # ---- load model ----------------------------------------------------------
     print(f"[eval] Loading model from {args.checkpoint} …")
     try:
-        model, tok, model_config = _load_model_and_tokenizer(
+        model, tok, _model_config = _load_model_and_tokenizer(
             args.checkpoint, args.tokenizer, device
         )
     except RuntimeError as exc:
@@ -490,7 +533,7 @@ def main() -> None:
         sys.exit(1)
 
     tasks_requested = [t.strip() for t in args.tasks.split(",") if t.strip()]
-    all_results: Dict[str, Any] = {
+    all_results: dict[str, Any] = {
         "checkpoint": args.checkpoint,
         "tokenizer": args.tokenizer,
         "device": device,

@@ -1,9 +1,8 @@
 """Data preparation script: Ingests multiple files, handles categories, and prepares training corpora."""
 
-import os
-import glob
 import argparse
-from typing import List, Optional
+import os
+
 from rich.console import Console
 from rich.table import Table
 
@@ -27,7 +26,7 @@ def scan_dataset_directory(raw_dir: str = "data/raw") -> dict:
 def merge_categorized_files(
     raw_dir: str = "data/raw",
     output_file: str = "data/processed/combined_corpus.txt",
-    selected_category: Optional[str] = None,
+    selected_category: str | None = None,
     include_tags: bool = True,
 ) -> None:
     """Merge multiple text files with category headers and document separators."""
@@ -80,27 +79,43 @@ def merge_categorized_files(
                     out_f.write(header + content + footer)
                     total_characters += len(content)
                     documents_merged += 1
-                except Exception as e:
+                except (OSError, UnicodeDecodeError) as e:
                     console.print(f"[red]Error reading {fpath}: {e}[/red]")
 
-    console.print(Panel_msg(
-        f"[bold green]Successfully merged {documents_merged} files![/bold green]\n"
-        f"Total Characters: {total_characters:,}\n"
-        f"Output file: [cyan]{output_file}[/cyan]"
-    ))
+    console.print(
+        Panel_msg(
+            f"[bold green]Successfully merged {documents_merged} files![/bold green]\n"
+            f"Total Characters: {total_characters:,}\n"
+            f"Output file: [cyan]{output_file}[/cyan]"
+        )
+    )
 
 
 def Panel_msg(text: str):
     from rich.panel import Panel
+
     return Panel(text, title="Data Pipeline", border_style="green")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Prepare and categorize multiple text datasets for ParagAI")
-    parser.add_argument("--raw_dir", type=str, default="data/raw", help="Path to raw data directory")
-    parser.add_argument("--output", type=str, default="data/processed/combined_corpus.txt", help="Combined output file")
-    parser.add_argument("--category", type=str, default=None, help="Specific category to merge (e.g. 'stories')")
-    parser.add_argument("--no_tags", action="store_true", help="Do not inject [CATEGORY: ...] headers")
+    parser = argparse.ArgumentParser(
+        description="Prepare and categorize multiple text datasets for ParagAI"
+    )
+    parser.add_argument(
+        "--raw_dir", type=str, default="data/raw", help="Path to raw data directory"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="data/processed/combined_corpus.txt",
+        help="Combined output file",
+    )
+    parser.add_argument(
+        "--category", type=str, default=None, help="Specific category to merge (e.g. 'stories')"
+    )
+    parser.add_argument(
+        "--no_tags", action="store_true", help="Do not inject [CATEGORY: ...] headers"
+    )
     args = parser.parse_args()
 
     merge_categorized_files(
@@ -113,4 +128,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

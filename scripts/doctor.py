@@ -26,22 +26,21 @@ Checks performed
 from __future__ import annotations
 
 import json
-import os
 import platform
 import sys
 import urllib.error
 import urllib.request
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, List, Optional
 
 # ---------------------------------------------------------------------------
 # Rich / ANSI colour helpers
 # ---------------------------------------------------------------------------
 try:
+    from rich import box as rich_box
     from rich.console import Console
     from rich.table import Table
-    from rich import box as rich_box
 
     _RICH = True
     _console = Console()
@@ -70,6 +69,7 @@ def _ansi(text: str, colour: str) -> str:
 # ---------------------------------------------------------------------------
 # Result container
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CheckResult:
@@ -100,6 +100,7 @@ class CheckResult:
 # Individual checks
 # ---------------------------------------------------------------------------
 
+
 def check_python_version() -> CheckResult:
     """Verify Python ≥ 3.10."""
     ver = sys.version_info
@@ -116,7 +117,7 @@ def check_python_version() -> CheckResult:
 def check_pytorch() -> CheckResult:
     """Check PyTorch installation, CUDA device, VRAM, bfloat16 support."""
     try:
-        import torch  # noqa: PLC0415
+        import torch
     except ImportError:
         return CheckResult(
             name="PyTorch",
@@ -130,7 +131,7 @@ def check_pytorch() -> CheckResult:
     if torch.cuda.is_available():
         device_idx = torch.cuda.current_device()
         device_name: str = torch.cuda.get_device_name(device_idx)
-        vram_gb: float = torch.cuda.get_device_properties(device_idx).total_memory / (1024 ** 3)
+        vram_gb: float = torch.cuda.get_device_properties(device_idx).total_memory / (1024**3)
         bf16: bool = torch.cuda.is_bf16_supported()
         details += [
             f"CUDA ✓ | {device_name}",
@@ -152,7 +153,7 @@ def check_pytorch() -> CheckResult:
 def check_torch_compile() -> CheckResult:
     """Check whether torch.compile is usable on the current platform."""
     try:
-        import torch  # noqa: PLC0415
+        import torch
     except ImportError:
         return CheckResult(
             name="torch.compile",
@@ -196,7 +197,7 @@ def _load_yaml_model_config(yaml_path: Path) -> dict:
     Handles nested mappings one level deep (the ``model:`` block).
     """
     config: dict = {}
-    current_section: Optional[dict] = None
+    current_section: dict | None = None
 
     with yaml_path.open("r", encoding="utf-8") as fh:
         for raw_line in fh:
@@ -268,11 +269,9 @@ def check_checkpoint(
         )
 
     try:
-        import torch  # noqa: PLC0415
+        import torch
     except ImportError:
-        return CheckResult(
-            name=name, passed=False, critical=False, detail="torch not importable"
-        )
+        return CheckResult(name=name, passed=False, critical=False, detail="torch not importable")
 
     try:
         cfg = _load_yaml_model_config(config_path)
@@ -307,9 +306,7 @@ def check_checkpoint(
         if emb_keys:
             emb_shape = tuple(state[emb_keys[0]].shape)
             if emb_shape[0] != vocab_size or emb_shape[1] != n_embd:
-                mismatches.append(
-                    f"embed {emb_shape} ≠ expected ({vocab_size}, {n_embd})"
-                )
+                mismatches.append(f"embed {emb_shape} ≠ expected ({vocab_size}, {n_embd})")
         else:
             mismatches.append("No embedding weight found in checkpoint")
 
@@ -324,9 +321,7 @@ def check_checkpoint(
                     except ValueError:
                         pass
         if block_indices and max(block_indices) + 1 != n_layer:
-            mismatches.append(
-                f"n_layer inferred={max(block_indices) + 1} ≠ config={n_layer}"
-            )
+            mismatches.append(f"n_layer inferred={max(block_indices) + 1} ≠ config={n_layer}")
 
         if mismatches:
             return CheckResult(
@@ -356,10 +351,10 @@ def check_tokenizer_roundtrip(tokenizer_path: Path) -> CheckResult:
     name = "Tokenizer roundtrip"
 
     test_strings: list[str] = [
-        "hello world",          # English
-        "হ্যালো বাংলা",          # Bengali
-        "नमस्ते हिंदी",          # Hindi
-        "🚀",                   # Emoji
+        "hello world",  # English
+        "হ্যালো বাংলা",  # Bengali
+        "नमस्ते हिंदी",  # Hindi
+        "🚀",  # Emoji
     ]
 
     if not tokenizer_path.exists():
@@ -376,13 +371,16 @@ def check_tokenizer_roundtrip(tokenizer_path: Path) -> CheckResult:
             tok_data = json.load(fh)
 
         if tok_data.get("tokenizer_class") == "indic_bpe":
-            from paragai.tokenizer.indic_bpe import IndicBPETokenizer  # noqa: PLC0415
+            from paragai.tokenizer.indic_bpe import IndicBPETokenizer
+
             tok = IndicBPETokenizer.load(str(tokenizer_path))
         elif tok_data.get("type") == "bpe":
-            from paragai.tokenizer.bpe_tokenizer import BPETokenizer  # noqa: PLC0415
+            from paragai.tokenizer.bpe_tokenizer import BPETokenizer
+
             tok = BPETokenizer.load(str(tokenizer_path))
         else:
-            from paragai.tokenizer.char_tokenizer import CharTokenizer  # noqa: PLC0415
+            from paragai.tokenizer.char_tokenizer import CharTokenizer
+
             tok = CharTokenizer.load(str(tokenizer_path))
 
         failures: list[str] = []
@@ -450,7 +448,7 @@ def check_vllm() -> CheckResult:
     """Check whether vLLM is importable."""
     name = "vLLM importable"
     try:
-        import vllm  # noqa: F401, PLC0415
+        import vllm
 
         ver: str = getattr(vllm, "__version__", "unknown")
         return CheckResult(name=name, passed=True, critical=False, detail=f"vllm {ver}")
@@ -468,6 +466,7 @@ def check_vllm() -> CheckResult:
 # Summary rendering
 # ---------------------------------------------------------------------------
 
+
 def _symbol(result: CheckResult) -> str:
     """Return the appropriate symbol for *result*."""
     if result.passed and result.warning:
@@ -475,7 +474,7 @@ def _symbol(result: CheckResult) -> str:
     return PASS_SYM if result.passed else FAIL_SYM
 
 
-def _print_summary_rich(results: List[CheckResult]) -> None:
+def _print_summary_rich(results: list[CheckResult]) -> None:
     """Render a pretty table with rich."""
     table = Table(
         title="ParagAI Doctor — Diagnostic Summary",
@@ -509,7 +508,7 @@ def _print_summary_rich(results: List[CheckResult]) -> None:
     _console.print()
 
 
-def _print_summary_ansi(results: List[CheckResult]) -> None:
+def _print_summary_ansi(results: list[CheckResult]) -> None:
     """Render a plain-text summary with ANSI colour codes."""
     sep = "─" * 70
     print()
@@ -538,7 +537,8 @@ def _print_summary_ansi(results: List[CheckResult]) -> None:
 # Entry point
 # ---------------------------------------------------------------------------
 
-def run_all_checks(project_root: Path) -> List[CheckResult]:
+
+def run_all_checks(project_root: Path) -> list[CheckResult]:
     """Run every diagnostic check and return results.
 
     Parameters

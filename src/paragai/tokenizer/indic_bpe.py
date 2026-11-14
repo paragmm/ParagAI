@@ -11,17 +11,14 @@ Extends BPETokenizer with:
 from __future__ import annotations
 
 import json
-import unicodedata
-from collections import defaultdict
-from typing import Dict, Iterator, List, Optional, Tuple, Union
+from collections.abc import Iterator
 
 from paragai.tokenizer.bpe_tokenizer import BPETokenizer
-
 
 # ---------------------------------------------------------------------------
 # Unicode script ranges used for coverage stats
 # ---------------------------------------------------------------------------
-_SCRIPT_RANGES: Dict[str, Tuple[int, int]] = {
+_SCRIPT_RANGES: dict[str, tuple[int, int]] = {
     "Latin": (0x0000, 0x024F),
     "Devanagari": (0x0900, 0x097F),
     "Bengali": (0x0980, 0x09FF),
@@ -32,7 +29,7 @@ _SCRIPT_RANGES: Dict[str, Tuple[int, int]] = {
 VALID_VOCAB_SIZES = (4096, 8192, 16384, 32768)
 
 # ChatML & utility special tokens appended after the base-4 specials
-CHATML_SPECIAL_TOKENS: List[str] = [
+CHATML_SPECIAL_TOKENS: list[str] = [
     "<|im_start|>",
     "<|im_end|>",
     "<|endoftext|>",
@@ -40,9 +37,9 @@ CHATML_SPECIAL_TOKENS: List[str] = [
 ]
 
 
-def _detect_scripts(text: str) -> List[str]:
+def _detect_scripts(text: str) -> list[str]:
     """Return the list of script names whose characters appear in *text*."""
-    found: List[str] = []
+    found: list[str] = []
     for script, (lo, hi) in _SCRIPT_RANGES.items():
         if any(lo <= ord(ch) <= hi for ch in text):
             found.append(script)
@@ -81,24 +78,22 @@ class IndicBPETokenizer(BPETokenizer):
 
     def __init__(self, vocab_size: int = 4096) -> None:
         if vocab_size not in VALID_VOCAB_SIZES:
-            raise ValueError(
-                f"vocab_size must be one of {VALID_VOCAB_SIZES}, got {vocab_size}."
-            )
+            raise ValueError(f"vocab_size must be one of {VALID_VOCAB_SIZES}, got {vocab_size}.")
 
         # Initialize parent (sets base 4 special tokens + 256 byte vocab)
         # but we override the special tokens list to include ChatML tokens.
         # We call super().__init__ with a dummy size to avoid doing extra work,
         # then rebuild the vocabulary ourselves.
         self.target_vocab_size = vocab_size
-        self.merges: Dict[Tuple[int, int], int] = {}
-        self.vocab: Dict[int, bytes] = {}
+        self.merges: dict[tuple[int, int], int] = {}
+        self.vocab: dict[int, bytes] = {}
 
         # --- 1. Base special tokens (IDs 0-3) ---
-        self.special_tokens: List[str] = [
-            self.PAD_TOKEN,   # 0
-            self.UNK_TOKEN,   # 1
-            self.BOS_TOKEN,   # 2
-            self.EOS_TOKEN,   # 3
+        self.special_tokens: list[str] = [
+            self.PAD_TOKEN,  # 0
+            self.UNK_TOKEN,  # 1
+            self.BOS_TOKEN,  # 2
+            self.EOS_TOKEN,  # 3
         ]
 
         # --- 2. ChatML special tokens (IDs 4-7) ---
@@ -123,7 +118,7 @@ class IndicBPETokenizer(BPETokenizer):
         return len(self.vocab)
 
     @property
-    def all_special_ids(self) -> List[int]:
+    def all_special_ids(self) -> list[int]:
         """Return all special token IDs."""
         return list(range(len(self.special_tokens)))
 
@@ -133,7 +128,7 @@ class IndicBPETokenizer(BPETokenizer):
 
     def train(  # type: ignore[override]
         self,
-        texts: Union[List[str], str],
+        texts: list[str] | str,
         verbose: bool = True,
         chunk_size: int = 10 * 1024 * 1024,  # 10 MB
     ) -> None:
@@ -153,7 +148,7 @@ class IndicBPETokenizer(BPETokenizer):
             texts = [texts]
 
         # ---- Encode all text to initial byte-ID sequences ----------------
-        ids: List[int] = []
+        ids: list[int] = []
         for text in texts:
             for chunk in _chunk_text(text, chunk_size):
                 raw_bytes = list(chunk.encode("utf-8"))
@@ -199,7 +194,7 @@ class IndicBPETokenizer(BPETokenizer):
     # Encode / Decode
     # ------------------------------------------------------------------
 
-    def encode(self, text: str, add_special_tokens: bool = False) -> List[int]:
+    def encode(self, text: str, add_special_tokens: bool = False) -> list[int]:
         """Encode *text* to a list of token IDs.
 
         Parameters
@@ -223,7 +218,7 @@ class IndicBPETokenizer(BPETokenizer):
             return [self.BOS_ID] + ids + [self.EOS_ID]
         return ids
 
-    def decode(self, ids: List[int], skip_special_tokens: bool = True) -> str:
+    def decode(self, ids: list[int], skip_special_tokens: bool = True) -> str:
         """Decode token IDs back to a string.
 
         Parameters
@@ -234,7 +229,7 @@ class IndicBPETokenizer(BPETokenizer):
             If True, all special token IDs are dropped from output.
         """
         special_id_set = set(self.all_special_ids) if skip_special_tokens else set()
-        byte_parts: List[bytes] = []
+        byte_parts: list[bytes] = []
         for token_id in ids:
             if token_id in special_id_set:
                 continue
@@ -262,9 +257,7 @@ class IndicBPETokenizer(BPETokenizer):
         encoded = self.encode(text)
         words = text.split()
         if words:
-            tokens_per_word: List[float] = [
-                len(self.encode(w)) for w in words
-            ]
+            tokens_per_word: list[float] = [len(self.encode(w)) for w in words]
             avg_tpw = sum(tokens_per_word) / len(tokens_per_word)
         else:
             avg_tpw = 0.0
@@ -295,17 +288,14 @@ class IndicBPETokenizer(BPETokenizer):
             "tokenizer_class": "indic_bpe",
             "target_vocab_size": self.target_vocab_size,
             "special_tokens": self.special_tokens,
-            "merges": [
-                [int(p[0]), int(p[1]), int(v)]
-                for p, v in self.merges.items()
-            ],
+            "merges": [[int(p[0]), int(p[1]), int(v)] for p, v in self.merges.items()],
             "vocab": {str(k): list(v) for k, v in self.vocab.items()},
         }
         with open(file_path, "w", encoding="utf-8") as fh:
             json.dump(data, fh, ensure_ascii=False, indent=2)
 
     @classmethod
-    def load(cls, file_path: str) -> "IndicBPETokenizer":
+    def load(cls, file_path: str) -> IndicBPETokenizer:
         """Deserialize tokenizer state from a JSON file.
 
         Parameters
@@ -320,19 +310,17 @@ class IndicBPETokenizer(BPETokenizer):
         tok.vocab = {int(k): bytes(v) for k, v in data["vocab"].items()}
         tok.special_tokens = data.get("special_tokens", tok.special_tokens)
         tok._byte_offset = len(tok.special_tokens)
-        tok.merges = {
-            (int(m[0]), int(m[1])): int(m[2]) for m in data["merges"]
-        }
+        tok.merges = {(int(m[0]), int(m[1])): int(m[2]) for m in data["merges"]}
         return tok
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _report_script_coverage(self, texts: List[str]) -> None:
+    def _report_script_coverage(self, texts: list[str]) -> None:
         """Print per-script coverage after training completes."""
         sample = "".join(texts)[:50_000]  # cap at 50 k chars for speed
-        script_samples: Dict[str, str] = {}
+        script_samples: dict[str, str] = {}
         for ch in sample:
             for script, (lo, hi) in _SCRIPT_RANGES.items():
                 if lo <= ord(ch) <= hi:

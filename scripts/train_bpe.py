@@ -1,10 +1,12 @@
 """Train BPETokenizer on processed corpora and save to checkpoints/."""
 
-import os
 import argparse
+import os
 import time
+
 from rich.console import Console
 from rich.panel import Panel
+
 from paragai.tokenizer.bpe_tokenizer import BPETokenizer
 
 console = Console()
@@ -12,9 +14,24 @@ console = Console()
 
 def main():
     parser = argparse.ArgumentParser(description="Train BPETokenizer on text corpus")
-    parser.add_argument("--corpus", type=str, default="data/processed/combined_corpus.txt", help="Path to text corpus")
-    parser.add_argument("--vocab_size", type=int, default=1024, help="Target vocabulary size (e.g. 1024, 2048, 4096)")
-    parser.add_argument("--output", type=str, default="checkpoints/tokenizer_bpe.json", help="Output path for tokenizer.json")
+    parser.add_argument(
+        "--corpus",
+        type=str,
+        default="data/processed/combined_corpus.txt",
+        help="Path to text corpus",
+    )
+    parser.add_argument(
+        "--vocab_size",
+        type=int,
+        default=1024,
+        help="Target vocabulary size (e.g. 1024, 2048, 4096)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="checkpoints/tokenizer_bpe.json",
+        help="Output path for tokenizer.json",
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.corpus):
@@ -24,14 +41,16 @@ def main():
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
-    console.print(Panel(
-        f"[bold cyan]Training BPETokenizer (Step 04)[/bold cyan]\n"
-        f"Corpus: [yellow]{args.corpus}[/yellow]\n"
-        f"Target Vocab Size: [green]{args.vocab_size:,}[/green]\n"
-        f"Output Destination: [magenta]{args.output}[/magenta]",
-        title="ParagAI Tokenizer Builder",
-        border_style="cyan"
-    ))
+    console.print(
+        Panel(
+            f"[bold cyan]Training BPETokenizer (Step 04)[/bold cyan]\n"
+            f"Corpus: [yellow]{args.corpus}[/yellow]\n"
+            f"Target Vocab Size: [green]{args.vocab_size:,}[/green]\n"
+            f"Output Destination: [magenta]{args.output}[/magenta]",
+            title="ParagAI Tokenizer Builder",
+            border_style="cyan",
+        )
+    )
 
     with open(args.corpus, "r", encoding="utf-8") as f:
         text = f.read()
@@ -54,9 +73,10 @@ def main():
     exact = sample_text == decoded
 
     console.print(f"Sanity Check: {len(sample_text)} characters -> {len(encoded)} subword tokens.")
-    console.print(f"Lossless Roundtrip: [{'bold green' if exact else 'bold red'}]{exact}[/{'bold green' if exact else 'bold red'}]")
+    console.print(
+        f"Lossless Roundtrip: [{'bold green' if exact else 'bold red'}]{exact}[/{'bold green' if exact else 'bold red'}]"
+    )
 
 
 if __name__ == "__main__":
     main()
-

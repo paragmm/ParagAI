@@ -12,9 +12,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import sys
-import time
-from pathlib import Path
 
 
 def fetch_via_datasets(num_stories: int, output_path: str) -> int:
@@ -24,7 +21,7 @@ def fetch_via_datasets(num_stories: int, output_path: str) -> int:
     except ImportError:
         return 0
 
-    print(f"[fetch] Using HuggingFace datasets library (streaming mode)...")
+    print("[fetch] Using HuggingFace datasets library (streaming mode)...")
     dataset = load_dataset("roneneldan/TinyStories", split="train", streaming=True)
     count = 0
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -45,22 +42,23 @@ def fetch_via_datasets(num_stories: int, output_path: str) -> int:
 
 def fetch_via_http(num_stories: int, output_path: str) -> int:
     """Fetch stories via direct HTTP download from HuggingFace dataset raw files."""
-    import json
     import urllib.request
 
     print("[fetch] Using direct HTTP fallback from Hugging Face...")
     # Hugging Face provides data files for roneneldan/TinyStories
     # e.g. TinyStories-train.txt or parquet splits
-    url = "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-train.txt"
+    url = (
+        "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-train.txt"
+    )
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     count = 0
 
     try:
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "ParagAI-Fetcher/1.0"}
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp, open(output_path, "w", encoding="utf-8") as out:
+        req = urllib.request.Request(url, headers={"User-Agent": "ParagAI-Fetcher/1.0"})
+        with (
+            urllib.request.urlopen(req, timeout=30) as resp,
+            open(output_path, "w", encoding="utf-8") as out,
+        ):
             current_story = []
             for line in resp:
                 text = line.decode("utf-8", errors="replace")
@@ -76,7 +74,7 @@ def fetch_via_http(num_stories: int, output_path: str) -> int:
                             break
                 else:
                     current_story.append(text)
-    except Exception as exc:
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
         print(f"[fetch] HTTP download encountered note: {exc}")
         # If full file is unavailable, write sample stories for demonstration
         if count == 0:
@@ -98,8 +96,15 @@ def fetch_via_http(num_stories: int, output_path: str) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch TinyStories dataset for ParagAI")
-    parser.add_argument("--num_stories", type=int, default=5000, help="Number of stories to download")
-    parser.add_argument("--output", type=str, default="data/raw/stories/tinystories_chunk_01.txt", help="Output file path")
+    parser.add_argument(
+        "--num_stories", type=int, default=5000, help="Number of stories to download"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="data/raw/stories/tinystories_chunk_01.txt",
+        help="Output file path",
+    )
     args = parser.parse_args()
 
     print(f"Fetching {args.num_stories:,} stories to {args.output}...")

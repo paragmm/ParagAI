@@ -7,33 +7,44 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
 import argparse
+import json
+
 import torch
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
+
 from paragai.config import ModelConfig
+from paragai.inference.generate import Generator
 from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.bpe_tokenizer import BPETokenizer
 from paragai.tokenizer.char_tokenizer import CharTokenizer
-from paragai.inference.generate import Generator
 
 console = Console()
 
 
 def main():
     parser = argparse.ArgumentParser(description="Chat interactively with a trained ParagAI model")
-    parser.add_argument("--checkpoint", type=str, default="checkpoints/best_model.pt", help="Path to checkpoint .pt")
-    parser.add_argument("--tokenizer", type=str, default="checkpoints/tokenizer.json", help="Path to tokenizer.json")
+    parser.add_argument(
+        "--checkpoint", type=str, default="checkpoints/best_model.pt", help="Path to checkpoint .pt"
+    )
+    parser.add_argument(
+        "--tokenizer", type=str, default="checkpoints/tokenizer.json", help="Path to tokenizer.json"
+    )
     parser.add_argument("--temperature", type=float, default=0.3, help="Sampling temperature")
     parser.add_argument("--top_k", type=int, default=40, help="Top-k filtering threshold")
     parser.add_argument("--top_p", type=float, default=0.9, help="Top-p nucleus sampling threshold")
-    parser.add_argument("--max_tokens", type=int, default=150, help="Maximum new tokens to generate")
-    parser.add_argument("--chatml", action="store_true", default=True, help="Use ChatML formatting for prompt")
+    parser.add_argument(
+        "--max_tokens", type=int, default=150, help="Maximum new tokens to generate"
+    )
+    parser.add_argument(
+        "--chatml", action="store_true", default=True, help="Use ChatML formatting for prompt"
+    )
     parser.add_argument(
         "--system",
         type=str,
         default="You are ParagAI, a compact, professional AI assistant built from first principles in Python.",
-        help="System instruction for ChatML prompt"
+        help="System instruction for ChatML prompt",
     )
     args = parser.parse_args()
 
@@ -45,11 +56,21 @@ def main():
     # Load tokenizer
     if os.path.exists(args.tokenizer):
         try:
-            tokenizer = BPETokenizer.load(args.tokenizer)
-        except Exception:
+            with open(args.tokenizer, "r", encoding="utf-8") as fh:
+                tok_data = json.load(fh)
+            if tok_data.get("tokenizer_class") == "indic_bpe":
+                from paragai.tokenizer.indic_bpe import IndicBPETokenizer
+                tokenizer = IndicBPETokenizer.load(args.tokenizer)
+            elif tok_data.get("type") == "bpe":
+                tokenizer = BPETokenizer.load(args.tokenizer)
+            else:
+                tokenizer = CharTokenizer.load(args.tokenizer)
+        except (json.JSONDecodeError, KeyError, ValueError, OSError, RuntimeError):
             tokenizer = CharTokenizer.load(args.tokenizer)
     else:
-        console.print("[yellow]Tokenizer not found, falling back to basic ASCII tokenizer...[/yellow]")
+        console.print(
+            "[yellow]Tokenizer not found, falling back to basic ASCII tokenizer...[/yellow]"
+        )
         tokenizer = CharTokenizer([chr(i) for i in range(32, 127)])
 
     # Load checkpoint
@@ -57,11 +78,10 @@ def main():
     checkpoint = torch.load(args.checkpoint, map_location=device)
     model_config = ModelConfig(**checkpoint["model_config"])
     model = ParagAIModel(model_config)
-    
+
     # Filter out legacy buffers (e.g. attn.mask from pre-SDPA checkpoints)
     state_dict = {
-        k: v for k, v in checkpoint["model_state_dict"].items()
-        if not k.endswith(".attn.mask")
+        k: v for k, v in checkpoint["model_state_dict"].items() if not k.endswith(".attn.mask")
     }
     model.load_state_dict(state_dict, strict=False)
     model.to(device)
@@ -69,13 +89,15 @@ def main():
 
     generator = Generator(model, tokenizer, device=device)
 
-    console.print(Panel(
-        f"[bold green]ParagAI Interactive Terminal[/bold green]\n"
-        f"Model: {model_config.name} | Parameters: {model.count_parameters():,} | Device: {device}\n"
-        f"Type [yellow]exit[/yellow] or [yellow]quit[/yellow] to end session.",
-        title="ParagAI",
-        border_style="green"
-    ))
+    console.print(
+        Panel(
+            f"[bold green]ParagAI Interactive Terminal[/bold green]\n"
+            f"Model: {model_config.name} | Parameters: {model.count_parameters():,} | Device: {device}\n"
+            f"Type [yellow]exit[/yellow] or [yellow]quit[/yellow] to end session.",
+            title="ParagAI",
+            border_style="green",
+        )
+    )
 
     while True:
         try:
@@ -142,4 +164,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

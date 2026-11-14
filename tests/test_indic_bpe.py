@@ -1,9 +1,9 @@
 """Unit tests for IndicBPETokenizer and multilingual tokenization."""
 
-import pytest
-import os
 import json
+import os
 import tempfile
+
 from paragai.tokenizer.indic_bpe import IndicBPETokenizer, _detect_scripts
 
 

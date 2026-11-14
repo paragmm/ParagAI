@@ -1,8 +1,6 @@
 """Rotary Position Embedding (RoPE) implementation."""
 
-from typing import Tuple
 import torch
-import torch.nn as nn
 
 
 def precompute_rope_freqs(head_dim: int, max_seq_len: int, theta: float = 10000.0) -> torch.Tensor:
@@ -40,4 +38,3 @@ def apply_rope(x: torch.Tensor, freqs_cis: torch.Tensor) -> torch.Tensor:
     # Convert back to real coordinates
     x_out = torch.view_as_real(x_rotated).flatten(3)
     return x_out.type_as(x)
-

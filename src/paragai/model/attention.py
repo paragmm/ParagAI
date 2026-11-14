@@ -1,10 +1,9 @@
 """Causal Multi-Head Self-Attention module with PyTorch SDPA and KV-Cache."""
 
-import math
-from typing import Optional, Tuple
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
+
 from paragai.config import ModelConfig
 from paragai.model.rope import apply_rope
 
@@ -33,10 +32,10 @@ class CausalSelfAttention(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        freqs_cis: Optional[torch.Tensor] = None,
-        kv_cache: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        freqs_cis: torch.Tensor | None = None,
+        kv_cache: tuple[torch.Tensor, torch.Tensor] | None = None,
         use_cache: bool = False,
-    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor] | None]:
         B, T, C = x.size()
 
         # Compute Q, K, V projections and reshape to (B, n_head, T, head_dim)

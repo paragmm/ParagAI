@@ -10,17 +10,17 @@ from __future__ import annotations
 import math
 import time
 from collections import deque
-from typing import Deque, Optional, Tuple
-
 
 try:
     import torch
+
     _TORCH_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _TORCH_AVAILABLE = False
 
 
 # ─────────────────────────── helpers ────────────────────────────────────────
+
 
 def _fmt_time(seconds: float) -> str:
     """Format *seconds* as ``HH:MM:SS`` or ``??:??:??`` when unknown."""
@@ -41,6 +41,7 @@ def _box_line(label: str, value: str, width: int = 48) -> str:
 
 
 # ─────────────────────────── main class ─────────────────────────────────────
+
 
 class TrainingTelemetry:
     """Collects and displays live metrics during a ParagAI training run.
@@ -72,16 +73,16 @@ class TrainingTelemetry:
 
     def __init__(
         self,
-        total_steps: Optional[int] = None,
+        total_steps: int | None = None,
         rolling_window: int = _WINDOW,
     ) -> None:
-        self.total_steps: Optional[int] = total_steps
+        self.total_steps: int | None = total_steps
         self._window: int = rolling_window
 
         # --- timing ---
         self._start_wall: float = time.monotonic()
         # deque of (wall_time, tokens_so_far) pairs for rolling window
-        self._tok_window: Deque[Tuple[float, int]] = deque(maxlen=rolling_window + 1)
+        self._tok_window: deque[tuple[float, int]] = deque(maxlen=rolling_window + 1)
         self._total_tokens: int = 0
 
         # --- tracked metrics ---
@@ -170,7 +171,7 @@ class TrainingTelemetry:
         Returns 0.0 when CUDA is unavailable.
         """
         if _TORCH_AVAILABLE and torch.cuda.is_available():
-            return torch.cuda.max_memory_allocated() / (1024 ** 2)
+            return torch.cuda.max_memory_allocated() / (1024**2)
         return 0.0
 
     @property
@@ -235,7 +236,7 @@ class TrainingTelemetry:
 
         def row(label: str, value: str) -> str:
             content = f"  {label:<18} {value}"
-            padded = content[: inner_w].ljust(inner_w)
+            padded = content[:inner_w].ljust(inner_w)
             return f"│{padded}│"
 
         def title_row(text: str) -> str:
@@ -247,7 +248,9 @@ class TrainingTelemetry:
         elapsed_str = _fmt_time(self.elapsed)
         eta_str = _fmt_time(self.eta)
         tps_str = f"{self.tokens_per_sec:,.0f}"
-        vram_str = f"{self.vram_mb:.1f}" if _TORCH_AVAILABLE and torch.cuda.is_available() else "N/A"
+        vram_str = (
+            f"{self.vram_mb:.1f}" if _TORCH_AVAILABLE and torch.cuda.is_available() else "N/A"
+        )
         lr_str = f"{self.lr:.4e}" if math.isfinite(self.lr) else "N/A"
         gnorm_str = f"{self.grad_norm:.4f}" if math.isfinite(self.grad_norm) else "N/A"
         tloss_str = f"{self.train_loss:.4f}" if math.isfinite(self.train_loss) else "N/A"

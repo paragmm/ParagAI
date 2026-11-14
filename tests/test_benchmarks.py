@@ -1,7 +1,5 @@
 """Unit tests for telemetry, diagnostics, and benchmark evaluation utilities."""
 
-import pytest
-import time
 from paragai.utils.telemetry import TrainingTelemetry
 
 

@@ -2,9 +2,11 @@
 
 import os
 import tempfile
+
 import torch
-from paragai.tokenizer.char_tokenizer import CharTokenizer
+
 from paragai.tokenizer.bpe_tokenizer import BPETokenizer
+from paragai.tokenizer.char_tokenizer import CharTokenizer
 from paragai.training.dataset import TextDataset
 
 
@@ -85,4 +87,3 @@ def test_dataset_batching():
     # y should be shifted by 1 relative to x
     for b in range(B):
         assert torch.equal(x[b, 1:], y[b, :-1])
-

@@ -1,9 +1,9 @@
 """Full ParagAI Decoder-Only Transformer Language Model with KV-Cache."""
 
-from typing import Optional, Tuple, List, Union
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
+
 from paragai.config import ModelConfig
 from paragai.model.normalization import RMSNorm
 from paragai.model.rope import precompute_rope_freqs
@@ -32,9 +32,7 @@ class ParagAIModel(nn.Module):
         self.register_buffer("freqs_cis", freqs_cis)
 
         # Stacked transformer decoder blocks
-        self.blocks = nn.ModuleList([
-            TransformerBlock(config) for _ in range(config.n_layer)
-        ])
+        self.blocks = nn.ModuleList([TransformerBlock(config) for _ in range(config.n_layer)])
 
         # Final normalization & language model head
         self.final_norm = RMSNorm(config.n_embd, eps=config.rms_norm_eps)
@@ -57,13 +55,13 @@ class ParagAIModel(nn.Module):
     def forward(
         self,
         idx: torch.Tensor,
-        targets: Optional[torch.Tensor] = None,
-        past_kv_caches: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None,
+        targets: torch.Tensor | None = None,
+        past_kv_caches: list[tuple[torch.Tensor, torch.Tensor]] | None = None,
         use_cache: bool = False,
-    ) -> Union[
-        Tuple[torch.Tensor, Optional[torch.Tensor]],
-        Tuple[torch.Tensor, Optional[torch.Tensor], List[Tuple[torch.Tensor, torch.Tensor]]]
-    ]:
+    ) -> (
+        tuple[torch.Tensor, torch.Tensor | None]
+        | tuple[torch.Tensor, torch.Tensor | None, list[tuple[torch.Tensor, torch.Tensor]]]
+    ):
         """
         Forward pass with optional KV-caching.
         Args:
@@ -72,7 +70,7 @@ class ParagAIModel(nn.Module):
             past_kv_caches: Optional list of (K, V) cache tuples for each transformer block
             use_cache: If True, returns (logits, loss, next_kv_caches)
         """
-        B, T = idx.size()
+        _B, T = idx.size()
         past_len = past_kv_caches[0][0].size(2) if past_kv_caches is not None else 0
         total_len = past_len + T
         assert total_len <= self.config.max_seq_len, (

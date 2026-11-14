@@ -1,9 +1,9 @@
 """Verification of scalar autograd engine against PyTorch autograd."""
 
 import torch
-import pytest
-from paragai.engine.value import Value
+
 from paragai.engine.nn import MLP
+from paragai.engine.value import Value
 
 
 def math_close(a: float, b: float, tol: float = 1e-4) -> bool:
@@ -79,7 +79,7 @@ def test_mlp_forward_and_backward():
     out = mlp(x)
     assert len(out) == 1
     out[0].backward()
-    
+
     # At least some parameters must have non-zero gradients
     grads = [p.grad for p in mlp.parameters()]
     assert any(g != 0.0 for g in grads)

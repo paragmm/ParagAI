@@ -1,11 +1,11 @@
 """Strongly-typed configuration classes for ParagAI."""
 
-from typing import Optional
 from pydantic import BaseModel, Field
 
 
 class ModelConfig(BaseModel):
     """Configuration for ParagAI Transformer Model."""
+
     name: str = "ParagAI-Small"
     vocab_size: int = Field(default=2048, ge=16, description="Vocabulary size")
     max_seq_len: int = Field(default=256, ge=16, description="Maximum context window length")
@@ -29,6 +29,7 @@ class ModelConfig(BaseModel):
 
 class TrainConfig(BaseModel):
     """Configuration for training ParagAI models."""
+
     batch_size: int = Field(default=32, ge=1)
     learning_rate: float = Field(default=6e-4, gt=0.0)
     min_lr: float = Field(default=6e-5, ge=0.0)
@@ -38,10 +39,13 @@ class TrainConfig(BaseModel):
     grad_clip: float = Field(default=1.0, ge=0.0)
     eval_interval: int = Field(default=250, ge=1)
     eval_iters: int = Field(default=50, ge=1)
-    grad_accum_steps: int = Field(default=1, ge=1, description="Gradient accumulation steps before optimizer update")
-    use_compile: bool = Field(default=False, description="Enable torch.compile (Linux/macOS + CUDA only)")
+    grad_accum_steps: int = Field(
+        default=1, ge=1, description="Gradient accumulation steps before optimizer update"
+    )
+    use_compile: bool = Field(
+        default=False, description="Enable torch.compile (Linux/macOS + CUDA only)"
+    )
     use_amp: bool = Field(default=False, description="Enable bfloat16 mixed-precision autocast")
     device: str = Field(default="auto")
     checkpoint_dir: str = Field(default="checkpoints")
     data_dir: str = Field(default="data/processed")
-

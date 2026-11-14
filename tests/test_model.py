@@ -1,9 +1,9 @@
 """Unit tests for ParagAI Model Architecture."""
 
 import torch
+
 from paragai.config import ModelConfig
 from paragai.model.normalization import RMSNorm
-from paragai.model.attention import CausalSelfAttention
 from paragai.model.transformer import ParagAIModel
 
 
@@ -84,7 +84,6 @@ def test_gradient_flow():
         assert not torch.isnan(param.grad).any(), f"Parameter {name} has NaN gradients"
 
 
-
 def test_kv_cache_equivalence():
     """Verify that KV-cached step-by-step forward pass matches full non-cached forward pass."""
     config = get_test_config()
@@ -99,11 +98,15 @@ def test_kv_cache_equivalence():
 
         # 2. Cached step-by-step pass
         # Prefill prompt with first 3 tokens
-        logits_prefill, _, kv_caches = model(full_seq[:, :3], use_cache=True)
+        _logits_prefill, _, kv_caches = model(full_seq[:, :3], use_cache=True)
         # Step 4: fourth token
-        logits_step4, _, kv_caches = model(full_seq[:, 3:4], past_kv_caches=kv_caches, use_cache=True)
+        _logits_step4, _, kv_caches = model(
+            full_seq[:, 3:4], past_kv_caches=kv_caches, use_cache=True
+        )
         # Step 5: fifth token
-        logits_step5, _, kv_caches = model(full_seq[:, 4:5], past_kv_caches=kv_caches, use_cache=True)
+        logits_step5, _, kv_caches = model(
+            full_seq[:, 4:5], past_kv_caches=kv_caches, use_cache=True
+        )
 
     # Logits at position 4 (last token) must be identical
     assert torch.allclose(logits_full[:, -1, :], logits_step5[:, -1, :], atol=1e-4)

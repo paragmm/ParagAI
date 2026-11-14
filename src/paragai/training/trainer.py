@@ -1,17 +1,17 @@
 """Trainer class for ParagAI — Phase 3: Hardware Acceleration & Distributed Training."""
 
-import os
 import math
+import os
 import sys
 import time
 from contextlib import nullcontext
-from typing import Optional, Dict, Any
+from typing import Any
 
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from paragai.config import ModelConfig, TrainConfig
+from paragai.config import TrainConfig
 from paragai.model.transformer import ParagAIModel
 from paragai.training.dataset import TextDataset
 from paragai.training.lr_scheduler import CosineWarmupScheduler
@@ -41,8 +41,8 @@ class Trainer:
         model: ParagAIModel,
         dataset: TextDataset,
         train_config: TrainConfig,
-        device: Optional[torch.device] = None,
-        tokenizer: Optional[Any] = None,
+        device: torch.device | None = None,
+        tokenizer: Any | None = None,
     ) -> None:
         self.model = model
         self.dataset = dataset
@@ -103,7 +103,7 @@ class Trainer:
         # Mixed-precision context                                               #
         # ------------------------------------------------------------------ #
         self._amp_ctx: Any = nullcontext()
-        self._scaler: Optional[torch.cuda.amp.GradScaler] = None
+        self._scaler: torch.cuda.amp.GradScaler | None = None
         if train_config.use_amp and self.device.type == "cuda":
             self._amp_ctx = torch.cuda.amp.autocast(dtype=torch.bfloat16)
             # GradScaler only needed for float16, NOT bfloat16
@@ -173,10 +173,10 @@ class Trainer:
     # ---------------------------------------------------------------------- #
 
     @torch.no_grad()
-    def estimate_loss(self) -> Dict[str, float]:
+    def estimate_loss(self) -> dict[str, float]:
         """Estimate average loss and perplexity across train and val splits."""
         self.model.eval()
-        out: Dict[str, float] = {}
+        out: dict[str, float] = {}
 
         for split in ["train", "val"]:
             losses = torch.zeros(self.config.eval_iters)
@@ -222,7 +222,7 @@ class Trainer:
                 next_id = logits[:, -1, :].argmax(dim=-1, keepdim=True)
                 input_ids = torch.cat([input_ids, next_id], dim=1)
 
-            generated_ids = input_ids[0, len(ids):].tolist()
+            generated_ids = input_ids[0, len(ids) :].tolist()
             text = self.tokenizer.decode(generated_ids, skip_special_tokens=True)
             print(f"\n[Preview] {text!r}\n", flush=True)
         except Exception as exc:  # noqa: BLE001
@@ -256,9 +256,7 @@ class Trainer:
         checkpoint = torch.load(file_path, map_location=self.device)
         # Filter legacy causal-mask buffers that are no longer part of the state
         state_dict = {
-            k: v
-            for k, v in checkpoint["model_state_dict"].items()
-            if not k.endswith(".attn.mask")
+            k: v for k, v in checkpoint["model_state_dict"].items() if not k.endswith(".attn.mask")
         }
         self._raw_model().load_state_dict(state_dict, strict=False)
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -292,7 +290,7 @@ class Trainer:
 
         for step in range(self.current_iter, self.config.max_iters):
             self.current_iter = step
-            step_start = time.perf_counter()
+            time.perf_counter()
 
             # -------------------------------------------------------------- #
             # Periodic evaluation                                               #
@@ -362,7 +360,11 @@ class Trainer:
             # -------------------------------------------------------------- #
             # Telemetry update                                                  #
             # -------------------------------------------------------------- #
-            current_lr = self.scheduler.get_last_lr()[0] if hasattr(self.scheduler, "get_last_lr") else self.config.learning_rate
+            current_lr = (
+                self.scheduler.get_last_lr()[0]
+                if hasattr(self.scheduler, "get_last_lr")
+                else self.config.learning_rate
+            )
             self._telemetry.update(
                 step=step,
                 loss=accumulated_loss * grad_accum,  # restore un-scaled loss for display

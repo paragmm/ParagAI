@@ -1,10 +1,11 @@
 """Convert exported SafeTensors & Tokenizer to GGUF format for Ollama."""
 
-import os
-import json
 import argparse
-import numpy as np
+import json
+import os
+
 import gguf
+import numpy as np
 from safetensors import safe_open
 
 
@@ -49,7 +50,7 @@ def convert_to_gguf(
     ffn_length = config.get("intermediate_size")
     if ffn_length is None:
         with safe_open(safetensors_path, framework="numpy", device="cpu") as f:
-            for k in f.keys():
+            for k in f.keys():  # noqa: SIM118
                 if "gate_proj.weight" in k or "ffn_gate.weight" in k:
                     ffn_length = int(f.get_tensor(k).shape[0])
                     break
@@ -92,7 +93,7 @@ def convert_to_gguf(
     #   BPETokenizer  : list of {"pair": [p0, p1], "new_id": n}
     #   IndicBPETokenizer: list of [p0, p1, new_id]
     merges_list = []
-    tokenizer_class = tok_data.get("tokenizer_class", "")
+    tok_data.get("tokenizer_class", "")
     if tok_type == "bpe" and "merges" in tok_data:
         for entry in tok_data["merges"]:
             if isinstance(entry, dict):
@@ -115,7 +116,7 @@ def convert_to_gguf(
     # 3. Tensors mapped to GGUF standard llama naming convention
     tensor_map = gguf.get_tensor_name_map(gguf.MODEL_ARCH.LLAMA, config["num_hidden_layers"])
     with safe_open(safetensors_path, framework="numpy", device="cpu") as f:
-        for key in f.keys():
+        for key in f.keys():  # noqa: SIM118
             tensor = f.get_tensor(key)
             # Ensure float32 or float16 numpy array
             if tensor.dtype == np.float64:
@@ -134,10 +135,21 @@ def convert_to_gguf(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Convert SafeTensors model to GGUF format for Ollama")
-    parser.add_argument("--input_dir", type=str, default="checkpoints/export_hf", help="Input directory containing config.json and model.safetensors")
-    parser.add_argument("--tokenizer", type=str, default="checkpoints/tokenizer.json", help="Path to tokenizer.json")
-    parser.add_argument("--output", type=str, default="checkpoints/paragai.gguf", help="Output .gguf file path")
+    parser = argparse.ArgumentParser(
+        description="Convert SafeTensors model to GGUF format for Ollama"
+    )
+    parser.add_argument(
+        "--input_dir",
+        type=str,
+        default="checkpoints/export_hf",
+        help="Input directory containing config.json and model.safetensors",
+    )
+    parser.add_argument(
+        "--tokenizer", type=str, default="checkpoints/tokenizer.json", help="Path to tokenizer.json"
+    )
+    parser.add_argument(
+        "--output", type=str, default="checkpoints/paragai.gguf", help="Output .gguf file path"
+    )
     args = parser.parse_args()
 
     convert_to_gguf(args.input_dir, args.tokenizer, args.output)

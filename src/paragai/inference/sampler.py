@@ -1,6 +1,5 @@
 """Probabilistic sampling methods for autoregressive generation."""
 
-from typing import Optional
 import torch
 import torch.nn.functional as F
 
@@ -8,10 +7,10 @@ import torch.nn.functional as F
 def sample_next_token(
     logits: torch.Tensor,
     temperature: float = 1.0,
-    top_k: Optional[int] = None,
-    top_p: Optional[float] = None,
+    top_k: int | None = None,
+    top_p: float | None = None,
     repetition_penalty: float = 1.0,
-    generated_tokens: Optional[torch.Tensor] = None,
+    generated_tokens: torch.Tensor | None = None,
 ) -> int:
     """
     Sample the next token ID from output logits using temperature, top-k, and top-p (nucleus).
@@ -56,4 +55,3 @@ def sample_next_token(
     probs = F.softmax(logits, dim=-1)
     next_token = torch.multinomial(probs, num_samples=1).item()
     return next_token
-

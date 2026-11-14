@@ -42,4 +42,3 @@ class CosineWarmupScheduler:
             param_group["lr"] = lr
         self.current_step += 1
         return lr
-

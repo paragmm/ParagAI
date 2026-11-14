@@ -1,11 +1,12 @@
 """Tests for autoregressive sampling and generation."""
 
 import torch
+
 from paragai.config import ModelConfig
+from paragai.inference.generate import Generator
+from paragai.inference.sampler import sample_next_token
 from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.char_tokenizer import CharTokenizer
-from paragai.inference.sampler import sample_next_token
-from paragai.inference.generate import Generator
 
 
 def test_greedy_sampler():
@@ -30,7 +31,9 @@ def test_generator_output_length():
     generator = Generator(model, tokenizer, device=torch.device("cpu"))
 
     prompt = "abc"
-    tokens = list(generator.stream_generate(prompt, max_new_tokens=10, temperature=0.8, stop_on_eos=False))
+    tokens = list(
+        generator.stream_generate(prompt, max_new_tokens=10, temperature=0.8, stop_on_eos=False)
+    )
     assert len(tokens) == 10
 
 

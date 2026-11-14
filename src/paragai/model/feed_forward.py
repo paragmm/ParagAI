@@ -1,15 +1,16 @@
 """SwiGLU Feed-Forward Network module."""
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
+
 from paragai.config import ModelConfig
 
 
 class SwiGLUFeedForward(nn.Module):
     """SwiGLU (Swish Gated Linear Unit) Feed-Forward Network."""
 
-    def __init__(self, config: ModelConfig, hidden_dim: int = None):
+    def __init__(self, config: ModelConfig, hidden_dim: int | None = None):
         super().__init__()
         if hidden_dim is None:
             # Standard LLaMA expansion: 4x n_embd
@@ -28,4 +29,3 @@ class SwiGLUFeedForward(nn.Module):
         gate = F.silu(self.w_gate(x))
         up = self.w_up(x)
         return self.dropout(self.w_down(gate * up))
-

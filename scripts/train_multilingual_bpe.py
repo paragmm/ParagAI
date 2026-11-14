@@ -24,16 +24,14 @@ import glob
 import os
 import sys
 import time
-import unicodedata
-from typing import Dict, List, Tuple
 
 # Allow running from project root without installation
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from paragai.tokenizer.indic_bpe import (
+    _SCRIPT_RANGES,
     VALID_VOCAB_SIZES,
     IndicBPETokenizer,
-    _SCRIPT_RANGES,
     _detect_scripts,
 )
 
@@ -59,7 +57,8 @@ def _rprint(msg: str) -> None:
 # Text sampling
 # ---------------------------------------------------------------------------
 
-def _collect_files(pattern: str) -> List[str]:
+
+def _collect_files(pattern: str) -> list[str]:
     """Expand *pattern* (glob) and return a sorted list of .txt file paths."""
     if os.path.isfile(pattern):
         return [pattern]
@@ -67,16 +66,20 @@ def _collect_files(pattern: str) -> List[str]:
     return [p for p in matches if os.path.isfile(p)]
 
 
-def _sample_text(files: List[str], max_bytes: int) -> str:
+def _sample_text(files: list[str], max_bytes: int) -> str:
     """Round-robin sample up to *max_bytes* bytes from *files*."""
     if not files:
         return ""
 
-    chunks: List[str] = []
+    from contextlib import ExitStack
+
+    chunks: list[str] = []
     total = 0
     # Interleave files for language balance
-    file_handles = [open(f, "r", encoding="utf-8", errors="replace") for f in files]
-    try:
+    with ExitStack() as stack:
+        file_handles = [
+            stack.enter_context(open(f, "r", encoding="utf-8", errors="replace")) for f in files
+        ]
         while total < max_bytes:
             exhausted = 0
             for fh in file_handles:
@@ -90,9 +93,6 @@ def _sample_text(files: List[str], max_bytes: int) -> str:
                 total += len(chunk.encode("utf-8"))
             if exhausted == len(file_handles):
                 break
-    finally:
-        for fh in file_handles:
-            fh.close()
 
     return "".join(chunks)
 
@@ -101,24 +101,21 @@ def _sample_text(files: List[str], max_bytes: int) -> str:
 # Script detection helpers
 # ---------------------------------------------------------------------------
 
-def _build_script_samples(text: str, sample_len: int = 1000) -> Dict[str, str]:
+
+def _build_script_samples(text: str, sample_len: int = 1000) -> dict[str, str]:
     """Return a mapping of script -> held-out sample of *sample_len* chars."""
-    buckets: Dict[str, List[str]] = {s: [] for s in _SCRIPT_RANGES}
+    buckets: dict[str, list[str]] = {s: [] for s in _SCRIPT_RANGES}
     for ch in text:
         for script, (lo, hi) in _SCRIPT_RANGES.items():
-            if lo <= ord(ch) <= hi:
-                if len(buckets[script]) < sample_len:
-                    buckets[script].append(ch)
-    return {
-        script: "".join(chars)
-        for script, chars in buckets.items()
-        if chars
-    }
+            if lo <= ord(ch) <= hi and len(buckets[script]) < sample_len:
+                buckets[script].append(ch)
+    return {script: "".join(chars) for script, chars in buckets.items() if chars}
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -165,7 +162,8 @@ def main() -> None:
         sys.exit(1)
 
     _rprint(
-        f"[bold cyan]Found {len(files)} file(s)[/bold cyan]" if HAS_RICH
+        f"[bold cyan]Found {len(files)} file(s)[/bold cyan]"
+        if HAS_RICH
         else f"Found {len(files)} file(s)"
     )
 
@@ -173,7 +171,7 @@ def main() -> None:
     _rprint(f"Sampling up to {args.sample_mb:.1f} MB of text…")
     t_sample = time.time()
     text = _sample_text(files, max_bytes)
-    sample_elapsed = time.time() - t_sample
+    time.time() - t_sample
 
     total_chars = len(text)
     detected_scripts = _detect_scripts(text)
@@ -204,7 +202,11 @@ def main() -> None:
         print("=" * 60)
 
     if not text.strip():
-        _rprint("[bold red]Sampled text is empty — aborting.[/bold red]" if HAS_RICH else "ERROR: Sampled text is empty.")
+        _rprint(
+            "[bold red]Sampled text is empty — aborting.[/bold red]"
+            if HAS_RICH
+            else "ERROR: Sampled text is empty."
+        )
         sys.exit(1)
 
     # Build held-out samples (before training so they are not affected)
@@ -215,8 +217,9 @@ def main() -> None:
 
     tokenizer = IndicBPETokenizer(vocab_size=args.vocab_size)
     _rprint(
-        f"\n[bold green]Starting BPE training…[/bold green]"
-        if HAS_RICH else "\nStarting BPE training…"
+        "\n[bold green]Starting BPE training…[/bold green]"
+        if HAS_RICH
+        else "\nStarting BPE training…"
     )
     t_train = time.time()
     tokenizer.train(text, verbose=True)
@@ -242,7 +245,9 @@ def main() -> None:
     else:
         print("\nScript Coverage Stats (held-out 1000-char samples)")
         print("-" * 70)
-        print(f"{'Script':<14} {'Chars':>6} {'Tokens':>7} {'Unique':>7} {'Avg t/w':>8} {'Ratio':>7}")
+        print(
+            f"{'Script':<14} {'Chars':>6} {'Tokens':>7} {'Unique':>7} {'Avg t/w':>8} {'Ratio':>7}"
+        )
         print("-" * 70)
 
     for script, sample in script_samples.items():
@@ -276,7 +281,9 @@ def main() -> None:
         "Tamil": "வணக்கம் தமிழ் நடுவர்",
         "Telugu": "నమస్కారం తెలుగు పరీక్ష",
     }
-    _rprint("\n[bold]Round-trip sanity checks:[/bold]" if HAS_RICH else "\nRound-trip sanity checks:")
+    _rprint(
+        "\n[bold]Round-trip sanity checks:[/bold]" if HAS_RICH else "\nRound-trip sanity checks:"
+    )
     all_pass = True
     for lang, sample in test_texts.items():
         enc = tokenizer.encode(sample)
@@ -286,14 +293,16 @@ def main() -> None:
         status = "[green]✓[/green]" if ok else "[red]✗[/red]"
         _rprint(
             f"  {status} {lang}: {len(enc)} tokens"
-            if HAS_RICH else f"  {'✓' if ok else '✗'} {lang}: {len(enc)} tokens"
+            if HAS_RICH
+            else f"  {'✓' if ok else '✗'} {lang}: {len(enc)} tokens"
         )
 
     # ---- Save -------------------------------------------------------------
     tokenizer.save(args.output)
     _rprint(
         f"\n[bold green]Tokenizer saved to:[/bold green] [yellow]{args.output}[/yellow]"
-        if HAS_RICH else f"\nTokenizer saved to: {args.output}"
+        if HAS_RICH
+        else f"\nTokenizer saved to: {args.output}"
     )
 
     if not all_pass:

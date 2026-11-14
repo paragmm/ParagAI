@@ -2,7 +2,9 @@
 
 import os
 import tempfile
+
 import torch
+
 from paragai.config import ModelConfig, TrainConfig
 from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.char_tokenizer import CharTokenizer
@@ -56,4 +58,3 @@ def test_overfitting_sanity():
         # Loss must drop significantly
         assert final_loss.item() < initial_loss.item()
         assert os.path.exists(os.path.join(tmp_dir, "final_model.pt"))
-

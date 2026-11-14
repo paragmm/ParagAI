@@ -1,7 +1,7 @@
 """Root Mean Square Normalization (RMSNorm) implementation."""
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class RMSNorm(nn.Module):
@@ -19,4 +19,3 @@ class RMSNorm(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         output = self._norm(x.float()).type_as(x)
         return output * self.weight
-

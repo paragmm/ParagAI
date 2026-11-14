@@ -2,12 +2,14 @@
 
 import os
 import tempfile
+
 import torch
+
 from paragai.config import ModelConfig
 from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.char_tokenizer import CharTokenizer
-from scripts.export_hf import convert_checkpoint_to_hf
 from scripts.export_gguf import convert_to_gguf
+from scripts.export_hf import convert_checkpoint_to_hf
 
 
 def test_hf_and_gguf_export():
@@ -29,10 +31,13 @@ def test_hf_and_gguf_export():
 
         # 2. Save PyTorch checkpoint
         ckpt_path = os.path.join(tmp_dir, "model.pt")
-        torch.save({
-            "model_state_dict": model.state_dict(),
-            "model_config": config.model_dump(),
-        }, ckpt_path)
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "model_config": config.model_dump(),
+            },
+            ckpt_path,
+        )
 
         # 3. Export to HuggingFace SafeTensors
         hf_dir = os.path.join(tmp_dir, "export_hf")
@@ -47,4 +52,3 @@ def test_hf_and_gguf_export():
 
         assert os.path.exists(gguf_path)
         assert os.path.getsize(gguf_path) > 0
-
