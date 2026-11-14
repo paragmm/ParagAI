@@ -239,3 +239,4 @@ To make ParagAI compete directly with Karpathy's `nanochat` while retaining its 
 ParagAI is already an extraordinarily well-crafted project. It has achieved what many large open-source projects fail to deliver: **a clean, bug-free, strictly first-principles Transformer implementation that successfully bridges from raw mathematical backpropagation to consumer-ready Ollama deployment**.
 
 By adopting nanochat's performance optimizations (`torch.compile`, bfloat16, automated eval benchmarks), ParagAI will not only match nanochat in speed and rigor, but will stand out as the **premier bilingual, edge-deployable open-source LLM framework in the AI ecosystem**.
+
