@@ -1,13 +1,13 @@
 {
   "checkpoint": "checkpoints/best_model.pt",
   "tokenizer": "checkpoints/tokenizer.json",
-  "device": "cpu",
+  "device": "cuda",
   "tasks_run": [
     "multiling",
     "tools",
     "story"
   ],
-  "timestamp": "2026-11-14T06:51:58Z",
+  "timestamp": "2026-11-14T09:27:56Z",
   "multiling": {
     "per_language": {
       "english": {
@@ -29,34 +29,34 @@
     "overall_pct": 100.0
   },
   "tools": {
-    "valid_json": 2,
+    "valid_json": 3,
     "total": 5,
-    "pct": 40.0,
+    "pct": 60.0,
     "details": [
       {
         "prompt": "Count lines in src/",
         "valid": false,
-        "response_preview": "Good morning! I hope you have a productive day ahead. How may I assist you?<|im_"
+        "response_preview": ".\"\n\nThe little girl was getting walking on a budle to her dad to see what was wr"
       },
       {
         "prompt": "List all Python files in the project.",
         "valid": true,
-        "response_preview": "<|tool_call|>\n{\"action\": \"shell\", \"command\": \"python --version\"}<|im_end|>\n\n<|im"
+        "response_preview": "[TASK: automation]\nShow current network configuration and IP addrectory.<|im_end"
       },
       {
         "prompt": "Show me the directory structure.",
         "valid": false,
-        "response_preview": "কঠোর পরিশ্রম এবং অধ্যবসায় দীর্ঘস্থায়ী সাফল্য বয়ে আনে।<|im_end|>\n\n<|im_start|>sys"
+        "response_preview": ".\n\n<|endoftext|>\n\nOnce upon a time, there was a little girl named Lily. She love"
       },
       {
         "prompt": "Find TODO comments in the codebase.",
         "valid": true,
-        "response_preview": "<|tool_call|>\n{\"action\": \"shell\", \"command\": \"pytest tests/ -v\"}<|im_end|>\n\n<|im"
+        "response_preview": ".\"\n\nThe little girl said, \"How! I assist you for your name?<|im_end|>\n\n<|im_star"
       },
       {
         "prompt": "Run the test suite and report results.",
-        "valid": false,
-        "response_preview": "ডেটা সায়েন্স জটিল ডেটাসেটের ভেতর থেকে গোপন তথ্য ও অন্তর্দৃষ্টি উন্মোচন করে।<|im_"
+        "valid": true,
+        "response_preview": "\n[TASK: automation]\nSwiport the vironment version and interpreter bone in the we"
       }
     ]
   },
@@ -68,32 +68,32 @@
       {
         "prompt": "Write a short story for me.",
         "narrative_start": false,
-        "first_word": "<|tool_call|>",
-        "response_preview": "<|tool_call|>\n{\"action\": \"shell\", \"command\": \"python --version\"}<|im_end|>\n\n<|im"
+        "first_word": ".\"",
+        "response_preview": ".\"\n\nThe little girl was happy and happy that she decided to get some other side "
       },
       {
         "prompt": "Tell me a story.",
         "narrative_start": false,
-        "first_word": "<|tool_call|>",
-        "response_preview": "<|tool_call|>\n{\"action\": \"shell\", \"command\": \"df -h\"}<|im_end|>\n\n<|im_start|>sys"
+        "first_word": "",
+        "response_preview": ". He gave him the lady and tried to play with them. He saw a big box of car and "
       },
       {
         "prompt": "Create a bedtime story.",
         "narrative_start": false,
-        "first_word": "<|tool_call|>",
-        "response_preview": "<|tool_call|>\n{\"action\": \"shell\", \"command\": \"dir /s /b .plans\\\\*.md\"}<|im_end|>"
+        "first_word": "and",
+        "response_preview": " and resour in the air and soon they saw a big gundle in the sky. He was so much"
       },
       {
         "prompt": "একটি ছোট গল্প লিখুন।",
         "narrative_start": false,
-        "first_word": "আমার",
-        "response_preview": "আমার নির্মাতা হলেন পরাগ। তিনি শূন্য থেকে গণিত ও ট্রান্সফরমার আর্কিটেকচার বাস্তবা"
+        "first_word": "ায়ন।<|im_end|>",
+        "response_preview": "ায়ন।<|im_end|>\n\n<|im_start|>system\nYou are ParagAI, a compact, professional AI a"
       },
       {
         "prompt": "मुझे एक कहानी सुनाओ।",
         "narrative_start": false,
-        "first_word": "সেলফ-অ্যাটেনশন",
-        "response_preview": "সেলফ-অ্যাটেনশন নেটওয়ার্ককে একসাথে একাধিক শব্দ প্রসেস করতে সাহায্য করে।<|im_end|>"
+        "first_word": "",
+        "response_preview": ".\n\n<|endoftext|>\n\nOnce upon a time, there was a little girl named Lily. She love"
       }
     ]
   }
