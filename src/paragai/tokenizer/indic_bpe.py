@@ -204,7 +204,23 @@ class IndicBPETokenizer(BPETokenizer):
         add_special_tokens:
             If True, prepend BOS and append EOS token IDs.
         """
-        raw_bytes = list(text.encode("utf-8"))
+        # Fast path for large multi-line corpora: tokenize line by line to keep O(N) bounded
+        if len(text) > 2048 and "\n" in text:
+            ids: list[int] = []
+            for line in text.splitlines(keepends=True):
+                if line:
+                    ids.extend(self._encode_chunk(line))
+            if add_special_tokens:
+                return [self.BOS_ID] + ids + [self.EOS_ID]
+            return ids
+
+        ids = self._encode_chunk(text)
+        if add_special_tokens:
+            return [self.BOS_ID] + ids + [self.EOS_ID]
+        return ids
+
+    def _encode_chunk(self, chunk: str) -> list[int]:
+        raw_bytes = list(chunk.encode("utf-8"))
         ids = [b + self._byte_offset for b in raw_bytes]
 
         while len(ids) >= 2:
@@ -213,9 +229,6 @@ class IndicBPETokenizer(BPETokenizer):
             if pair not in self.merges:
                 break
             ids = self.merge(ids, pair, self.merges[pair])
-
-        if add_special_tokens:
-            return [self.BOS_ID] + ids + [self.EOS_ID]
         return ids
 
     def decode(self, ids: list[int], skip_special_tokens: bool = True) -> str:

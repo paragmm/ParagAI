@@ -12,6 +12,7 @@ import argparse
 import json
 import shutil
 
+import numpy as np
 import yaml
 
 from paragai.config import ModelConfig, TrainConfig
@@ -160,7 +161,17 @@ def main():
     model_yaml["vocab_size"] = tokenizer.vocab_size
     model_config = ModelConfig(**model_yaml)
 
-    dataset = TextDataset.from_text(text, tokenizer, val_ratio=0.1)
+    logger.info("Tokenizing dataset line-by-line (ultra-fast mode)...")
+    lines = text.splitlines(keepends=True)
+    token_ids: list[int] = []
+    total_lines = len(lines)
+    for idx, line in enumerate(lines):
+        if line:
+            token_ids.extend(tokenizer.encode(line))
+        if (idx + 1) % 2500 == 0 or (idx + 1) == total_lines:
+            logger.info(f"Tokenized {idx + 1:,}/{total_lines:,} lines ({len(token_ids):,} tokens)...")
+
+    dataset = TextDataset(np.array(token_ids, dtype=np.int32), val_ratio=0.1)
     model = ParagAIModel(model_config)
 
     trainer = Trainer(model, dataset, train_config)
