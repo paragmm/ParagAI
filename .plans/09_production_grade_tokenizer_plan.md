@@ -31,45 +31,34 @@ When training `IndicBPETokenizer` on a 5 MB corpus with `vocab_size=4096`:
 
 ## 2. Core Architectural Pillars
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                   PARAGAI PRO TOKENIZER DUAL-TIER ENGINE                    │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-        ┌──────────────────────────────┴──────────────────────────────┐
-        ▼                                                             ▼
-┌───────────────────────────────┐             ┌───────────────────────────────┐
-│     TIER 1: FIRST-PRINCIPLES  │             │     TIER 2: INDUSTRIAL FAST   │
-│   (Pure Python & NumPy Opt)   │             │  (Multi-Threaded / Native)    │
-│ • Regex Word-Frequency Table  │             │ • Hugging Face / Rust Backend │
-│ • In-Memory Word Mutator      │             │ • ByteLevel BPE Pre-tokenizer │
-│ • Zero Third-Party Dependency │             │ • SIMD / Multi-core Parallel  │
-│ • Educational & Transparent   │             │ • Production Cloud & Cluster  │
-└───────────────┬───────────────┘             └───────────────┬───────────────┘
-                │                                             │
-                └──────────────────────┬──────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       UNIFIED PARAGAI VOCABULARY SPEC                       │
-│ • Fixed 256-Byte Fallback (IDs 8-263): 100% Lossless, 0% <unk>             │
-│ • Standard Specials (IDs 0-3): <pad>, <unk>, <bos>, <eos>                   │
-│ • ChatML Specials (IDs 4-7): <|im_start|>, <|im_end|>, <|endoftext|>, etc.  │
-│ • Learned Merges (IDs 264+): Indic Script-Balanced Merge Sequences          │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-        ┌──────────────────────────────┴──────────────────────────────┐
-        ▼                                                             ▼
-┌───────────────────────────────┐             ┌───────────────────────────────┐
-│     EDGE RUNTIME (OLLAMA)     │             │     CLOUD SERVING (vLLM)      │
-│ • Export to GGUF Byte-Format  │             │ • Export to tokenizer.json    │
-│ • Modelfile Embedding         │             │ • LLaMA-3 / Mistral Schema    │
-└───────────────────────────────┘             └───────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph ParagAI ["ParagAI Pro Tokenizer Dual-Tier Engine"]
+        T1["Tier 1: First-Principles<br/>(Pure Python & NumPy Opt)<br/>• Regex Word-Frequency Table<br/>• In-Memory Word Mutator<br/>• Zero 3rd-Party Dependencies"]
+        T2["Tier 2: Industrial Fast<br/>(Multi-Threaded / Native)<br/>• Rust / Tokenizers Backend<br/>• ByteLevel BPE Pre-tokenizer<br/>• SIMD Multi-core Parallel"]
+    end
+
+    subgraph Vocab ["Unified ParagAI Vocabulary Spec"]
+        V1["Fixed 256-Byte Fallback (IDs 8-263): 100% Lossless, 0% &lt;unk&gt;"]
+        V2["Standard Specials (IDs 0-3): &lt;pad&gt;, &lt;unk&gt;, &lt;bos&gt;, &lt;eos&gt;"]
+        V3["ChatML Specials (IDs 4-7): &lt;|im_start|&gt;, &lt;|im_end|&gt;, etc."]
+        V4["Learned Merges (IDs 264+): Indic Script-Balanced Sequences"]
+    end
+
+    subgraph Deploy ["Unified Deployment Standard"]
+        D1["Edge Runtime (Ollama)<br/>• GGUF Byte-Format Export<br/>• Modelfile Embedding"]
+        D2["Cloud Serving (vLLM)<br/>• tokenizer.json Export<br/>• LLaMA-3 / Mistral Schema"]
+    end
+
+    T1 --> Vocab
+    T2 --> Vocab
+    Vocab --> D1
+    Vocab --> D2
 ```
 
 ### Pillar 1: Pre-Tokenization & Unique Word Frequency Table (Python Tier)
 Instead of treating text as a monolithic 5 MB byte array, text is split into tokens using a Unicode-aware regular expression (following GPT-4 / LLaMA standards):
-1. Split corpus into word units: `pattern = re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")`.
+1. Split corpus into word units using an Indic-aware regex pattern.
 2. Aggregate words into a frequency dictionary: `Counter[tuple[int, ...], int]`.
 3. In a 5 MB corpus, 5,000,000 raw bytes collapse into ~30,000 unique words.
 4. Merge operations mutate the **30,000 entries in the frequency table** rather than the 5,000,000-element list.
@@ -98,7 +87,35 @@ Both Python and Native backends must export to identical target artifacts:
 
 ---
 
-## 3. Step-by-Step Implementation Roadmap
+## 3. Production External Package Ecosystem (Industry Standard)
+
+To match modern LLM companies (OpenAI, Meta, Mistral, Google), ParagAI integrates the exact battle-tested libraries used in production:
+
+| Package | Minimum Version | Author / Backing | Why Pro LLMs Use It | ParagAI Integration |
+|---|---|---|---|---|
+| **`tokenizers`** | `>=0.19.0` | Hugging Face (Rust Core) | The industry de-facto BPE/ByteLevel engine (powers LLaMA-3, Mistral, Starcoder). Uses multi-core Rayon parallelism + SIMD vectorization to train on gigabytes in minutes. | Powers `FastIndicBPETokenizer` with instant training, producing native `tokenizer.json` for vLLM & Ollama. |
+| **`regex`** | `>=2024.4.16` | Python Software Foundation / MRAB | Standard Python `re` does not support Unicode 15 script categories (`\p{L}`, `\p{N}`, `\p{M}`). Used by OpenAI's `tiktoken` and LLaMA-3 regex pre-tokenization. | Provides regex word splitting that preserves Indic conjuncts and *matras* before BPE merges. |
+| **`safetensors`** | `>=0.4.0` | Hugging Face (Rust Core) | Memory-mapped zero-copy tensor serialization format standard across open-source LLMs. | Serializes model embeddings and projection weights alongside tokenizer vocabulary. |
+| **`gguf`** | `>=0.6.0` | Georgi Gerganov / llama.cpp | Binary format required by Ollama for single-file deployment with embedded tokenizer vocabulary. | Direct export from `IndicBPETokenizer` into Ollama Modelfile-compatible `.gguf`. |
+
+### Installation in ParagAI
+These packages are declared in `pyproject.toml`:
+```toml
+# In pyproject.toml
+[project.optional-dependencies]
+tokenizer = [
+    "tokenizers>=0.19.0",
+    "regex>=2024.4.16"
+]
+```
+To install in Google Colab or locally:
+```bash
+pip install -e ".[tokenizer]"
+```
+
+---
+
+## 4. Step-by-Step Implementation Roadmap
 
 ### Phase 1: Algorithmic Refactor of First-Principles Pure Python BPE
 * **Files:** `src/paragai/tokenizer/bpe_tokenizer.py`, `src/paragai/tokenizer/indic_bpe.py`
@@ -140,7 +157,7 @@ Both Python and Native backends must export to identical target artifacts:
 
 ---
 
-## 4. Verification & Acceptance Criteria
+## 5. Verification & Acceptance Criteria
 
 | Check | Requirement | Target |
 |---|---|---|
