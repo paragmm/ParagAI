@@ -6,15 +6,17 @@ Usage
         --input "data/raw/**/*.txt" \\
         --vocab_size 4096 \\
         --output checkpoints/tokenizer_indic.json \\
-        --sample_mb 20
+        --sample_mb 20 \\
+        --backend auto \\
+        --export_hf checkpoints/
 
 The script:
 1. Globs all matching .txt files.
-2. Samples up to ``--sample_mb`` MB of text (round-robin across files).
+2. Samples up to ``--sample_mb`` MB of text (round-robin across files for balance).
 3. Reports total characters read and unique Unicode scripts detected.
-4. Trains an ``IndicBPETokenizer`` on the sampled text.
+4. Trains an ``IndicBPETokenizer`` or ``FastIndicBPETokenizer`` on the sampled text.
 5. Runs ``get_coverage_stats`` on a 1000-char held-out sample per script.
-6. Saves the tokenizer JSON to ``--output``.
+6. Saves the tokenizer JSON to ``--output`` and optionally exports Hugging Face format to ``--export_hf``.
 """
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ import time
 # Allow running from project root without installation
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+from paragai.tokenizer.fast_indic_bpe import FastIndicBPETokenizer
 from paragai.tokenizer.indic_bpe import (
     _SCRIPT_RANGES,
     VALID_VOCAB_SIZES,
@@ -67,7 +70,7 @@ def _collect_files(pattern: str) -> list[str]:
 
 
 def _sample_text(files: list[str], max_bytes: int) -> str:
-    """Round-robin sample up to *max_bytes* bytes from *files*."""
+    """Round-robin sample up to *max_bytes* bytes from *files* for language balance."""
     if not files:
         return ""
 
@@ -75,10 +78,10 @@ def _sample_text(files: list[str], max_bytes: int) -> str:
 
     chunks: list[str] = []
     total = 0
-    # Interleave files for language balance
     with ExitStack() as stack:
         file_handles = [
-            stack.enter_context(open(f, "r", encoding="utf-8", errors="replace")) for f in files
+            stack.enter_context(open(f, "r", encoding="utf-8", errors="replace"))
+            for f in files
         ]
         while total < max_bytes:
             exhausted = 0
@@ -119,7 +122,7 @@ def _build_script_samples(text: str, sample_len: int = 1000) -> dict[str, str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Train IndicBPETokenizer on multilingual corpora",
+        description="Train High-Throughput Indic + Multilingual BPE Tokenizer",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -147,6 +150,19 @@ def main() -> None:
         default=20.0,
         help="Approximate megabytes of text to sample for training",
     )
+    parser.add_argument(
+        "--backend",
+        type=str,
+        default="auto",
+        choices=["auto", "fast", "pure_python"],
+        help="Execution engine: 'auto' (Rust if available), 'fast' (Rust), or 'pure_python'",
+    )
+    parser.add_argument(
+        "--export_hf",
+        type=str,
+        default=None,
+        help="Optional directory path to export Hugging Face format (tokenizer.json) for vLLM & Ollama",
+    )
     args = parser.parse_args()
 
     max_bytes = int(args.sample_mb * 1024 * 1024)
@@ -171,7 +187,7 @@ def main() -> None:
     _rprint(f"Sampling up to {args.sample_mb:.1f} MB of text…")
     t_sample = time.time()
     text = _sample_text(files, max_bytes)
-    time.time() - t_sample
+    t_sample_elapsed = time.time() - t_sample
 
     total_chars = len(text)
     detected_scripts = _detect_scripts(text)
@@ -179,25 +195,27 @@ def main() -> None:
     if HAS_RICH:
         console.print(
             Panel(
-                f"[bold cyan]IndicBPETokenizer Training[/bold cyan]\n"
+                f"[bold cyan]Indic BPE Tokenizer Training[/bold cyan]\n"
                 f"Input pattern : [yellow]{args.input}[/yellow]\n"
                 f"Files matched : [green]{len(files)}[/green]\n"
-                f"Total chars   : [green]{total_chars:,}[/green]\n"
+                f"Total chars   : [green]{total_chars:,}[/green] ({len(text.encode('utf-8')) / (1024*1024):.2f} MB in {t_sample_elapsed:.2f}s)\n"
                 f"Scripts found : [magenta]{detected_scripts or ['(none recognised)']}[/magenta]\n"
                 f"Vocab size    : [cyan]{args.vocab_size:,}[/cyan]\n"
+                f"Backend       : [bold green]{args.backend}[/bold green]\n"
                 f"Output path   : [yellow]{args.output}[/yellow]",
-                title="ParagAI Multilingual Tokenizer",
+                title="ParagAI Pro Multilingual Tokenizer",
                 border_style="cyan",
             )
         )
     else:
         print("=" * 60)
-        print("IndicBPETokenizer Training")
+        print("Indic BPE Tokenizer Training")
         print(f"  Input pattern : {args.input}")
         print(f"  Files matched : {len(files)}")
         print(f"  Total chars   : {total_chars:,}")
         print(f"  Scripts found : {detected_scripts or ['(none recognised)']}")
         print(f"  Vocab size    : {args.vocab_size:,}")
+        print(f"  Backend       : {args.backend}")
         print(f"  Output path   : {args.output}")
         print("=" * 60)
 
@@ -215,11 +233,15 @@ def main() -> None:
     # ---- Training ---------------------------------------------------------
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
 
-    tokenizer = IndicBPETokenizer(vocab_size=args.vocab_size)
+    if args.backend == "pure_python":
+        tokenizer = IndicBPETokenizer(vocab_size=args.vocab_size)
+    else:
+        tokenizer = FastIndicBPETokenizer(vocab_size=args.vocab_size)
+
     _rprint(
-        "\n[bold green]Starting BPE training…[/bold green]"
+        f"\n[bold green]Starting BPE training using backend: {tokenizer.backend if hasattr(tokenizer, 'backend') else 'pure_python'}…[/bold green]"
         if HAS_RICH
-        else "\nStarting BPE training…"
+        else f"\nStarting BPE training using backend: {getattr(tokenizer, 'backend', 'pure_python')}…"
     )
     t_train = time.time()
     tokenizer.train(text, verbose=True)
@@ -241,7 +263,6 @@ def main() -> None:
         table.add_column("Unique Tokens", justify="right")
         table.add_column("Avg tok/word", justify="right")
         table.add_column("Compression", justify="right")
-
     else:
         print("\nScript Coverage Stats (held-out 1000-char samples)")
         print("-" * 70)
@@ -304,6 +325,14 @@ def main() -> None:
         if HAS_RICH
         else f"\nTokenizer saved to: {args.output}"
     )
+
+    if args.export_hf and hasattr(tokenizer, "export_huggingface"):
+        hf_path = tokenizer.export_huggingface(args.export_hf)
+        _rprint(
+            f"[bold green]Hugging Face format exported to:[/bold green] [yellow]{hf_path}[/yellow]"
+            if HAS_RICH
+            else f"Hugging Face format exported to: {hf_path}"
+        )
 
     if not all_pass:
         _rprint(

@@ -11,9 +11,21 @@ Extends BPETokenizer with:
 from __future__ import annotations
 
 import json
+from collections import Counter, defaultdict
 from collections.abc import Iterator
 
 from paragai.tokenizer.bpe_tokenizer import BPETokenizer
+
+try:
+    import regex as re
+
+    _WORD_REGEX = re.compile(
+        r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+    )
+except ImportError:
+    import re  # type: ignore[no-redef]
+
+    _WORD_REGEX = re.compile(r"""\s+|[^\s]+""")
 
 # ---------------------------------------------------------------------------
 # Unicode script ranges used for coverage stats
@@ -132,7 +144,7 @@ class IndicBPETokenizer(BPETokenizer):
         verbose: bool = True,
         chunk_size: int = 10 * 1024 * 1024,  # 10 MB
     ) -> None:
-        """Train BPE merge rules on multilingual text.
+        """Train BPE merge rules on multilingual text using word frequency hashing.
 
         Parameters
         ----------
@@ -141,18 +153,10 @@ class IndicBPETokenizer(BPETokenizer):
         verbose:
             If True, print progress every 100 merges and final stats.
         chunk_size:
-            Maximum bytes per processing chunk. Text is split at valid UTF-8
-            boundaries to keep memory usage bounded (default 10 MB).
+            Maximum bytes per processing chunk (default 10 MB).
         """
         if isinstance(texts, str):
             texts = [texts]
-
-        # ---- Encode all text to initial byte-ID sequences ----------------
-        ids: list[int] = []
-        for text in texts:
-            for chunk in _chunk_text(text, chunk_size):
-                raw_bytes = list(chunk.encode("utf-8"))
-                ids.extend(b + self._byte_offset for b in raw_bytes)
 
         num_merges = self.target_vocab_size - len(self.vocab)
         if num_merges <= 0:
@@ -169,20 +173,84 @@ class IndicBPETokenizer(BPETokenizer):
                 f"Merges needed: {num_merges:,}"
             )
 
-        for i in range(num_merges):
-            stats = self.get_stats(ids)
-            if not stats:
-                break
-            best_pair = max(stats, key=stats.__getitem__)
-            new_id = len(self.vocab)
+        # ---- Word-frequency aggregation ----
+        word_freqs: Counter[str] = Counter()
+        for text in texts:
+            for chunk in _chunk_text(text, chunk_size):
+                words = _WORD_REGEX.findall(chunk)
+                word_freqs.update(words)
 
-            ids = self.merge(ids, best_pair, new_id)
+        if not word_freqs:
+            if verbose:
+                print("No words extracted from corpus; aborting training.")
+            return
+
+        word_list: list[list[int]] = []
+        word_counts: list[int] = []
+        pair_counts: dict[tuple[int, int], int] = defaultdict(int)
+        pair_to_words: dict[tuple[int, int], set[int]] = defaultdict(set)
+
+        for w_idx, (word, count) in enumerate(word_freqs.items()):
+            raw_bytes = list(word.encode("utf-8"))
+            token_ids = [b + self._byte_offset for b in raw_bytes]
+            word_list.append(token_ids)
+            word_counts.append(count)
+            for i in range(len(token_ids) - 1):
+                pair = (token_ids[i], token_ids[i + 1])
+                pair_counts[pair] += count
+                pair_to_words[pair].add(w_idx)
+
+        for m in range(num_merges):
+            if not pair_counts:
+                break
+
+            best_pair = max(pair_counts, key=pair_counts.get)
+            if pair_counts[best_pair] <= 0:
+                break
+
+            new_id = len(self.vocab)
             self.merges[best_pair] = new_id
             self.vocab[new_id] = self.vocab[best_pair[0]] + self.vocab[best_pair[1]]
 
-            if verbose and (i + 1) % 100 == 0:
+            affected_words = list(pair_to_words[best_pair])
+            p0, p1 = best_pair
+
+            for w_idx in affected_words:
+                old_tokens = word_list[w_idx]
+                count = word_counts[w_idx]
+
+                # Decrement old pairs
+                for i in range(len(old_tokens) - 1):
+                    p = (old_tokens[i], old_tokens[i + 1])
+                    pair_counts[p] -= count
+                    if pair_counts[p] <= 0:
+                        del pair_counts[p]
+                    pair_to_words[p].discard(w_idx)
+                    if not pair_to_words[p]:
+                        del pair_to_words[p]
+
+                # Merge occurrences in word
+                new_tokens: list[int] = []
+                i = 0
+                while i < len(old_tokens):
+                    if i < len(old_tokens) - 1 and old_tokens[i] == p0 and old_tokens[i + 1] == p1:
+                        new_tokens.append(new_id)
+                        i += 2
+                    else:
+                        new_tokens.append(old_tokens[i])
+                        i += 1
+
+                # Increment new pairs
+                for i in range(len(new_tokens) - 1):
+                    p = (new_tokens[i], new_tokens[i + 1])
+                    pair_counts[p] += count
+                    pair_to_words[p].add(w_idx)
+
+                word_list[w_idx] = new_tokens
+
+            if verbose and (m + 1) % 100 == 0:
                 print(
-                    f"  Merge {i + 1:>6}/{num_merges}: "
+                    f"  Merge {m + 1:>6}/{num_merges}: "
                     f"{best_pair} -> {new_id}  "
                     f"(vocab={len(self.vocab):,})"
                 )
@@ -204,15 +272,8 @@ class IndicBPETokenizer(BPETokenizer):
         add_special_tokens:
             If True, prepend BOS and append EOS token IDs.
         """
-        # Fast path for large multi-line corpora: tokenize line by line to keep O(N) bounded
-        if len(text) > 2048 and "\n" in text:
-            ids: list[int] = []
-            for line in text.splitlines(keepends=True):
-                if line:
-                    ids.extend(self._encode_chunk(line))
-            if add_special_tokens:
-                return [self.BOS_ID] + ids + [self.EOS_ID]
-            return ids
+        if not text:
+            return [self.BOS_ID, self.EOS_ID] if add_special_tokens else []
 
         ids = self._encode_chunk(text)
         if add_special_tokens:
@@ -220,15 +281,19 @@ class IndicBPETokenizer(BPETokenizer):
         return ids
 
     def _encode_chunk(self, chunk: str) -> list[int]:
-        raw_bytes = list(chunk.encode("utf-8"))
-        ids = [b + self._byte_offset for b in raw_bytes]
+        words = _WORD_REGEX.findall(chunk)
+        ids: list[int] = []
+        for word in words:
+            raw_bytes = list(word.encode("utf-8"))
+            word_ids = [b + self._byte_offset for b in raw_bytes]
 
-        while len(ids) >= 2:
-            stats = self.get_stats(ids)
-            pair = min(stats, key=lambda p: self.merges.get(p, float("inf")))
-            if pair not in self.merges:
-                break
-            ids = self.merge(ids, pair, self.merges[pair])
+            while len(word_ids) >= 2:
+                stats = self.get_stats(word_ids)
+                pair = min(stats, key=lambda p: self.merges.get(p, float("inf")))
+                if pair not in self.merges:
+                    break
+                word_ids = self.merge(word_ids, pair, self.merges[pair])
+            ids.extend(word_ids)
         return ids
 
     def decode(self, ids: list[int], skip_special_tokens: bool = True) -> str:
