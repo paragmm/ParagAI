@@ -371,7 +371,11 @@ def check_tokenizer_roundtrip(tokenizer_path: Path) -> CheckResult:
         with open(tokenizer_path, "r", encoding="utf-8") as fh:
             tok_data = json.load(fh)
 
-        if tok_data.get("tokenizer_class") == "indic_bpe":
+        if tok_data.get("tokenizer_class") == "fast_indic_bpe":
+            from paragai.tokenizer.fast_indic_bpe import FastIndicBPETokenizer
+
+            tok = FastIndicBPETokenizer.load(str(tokenizer_path))
+        elif tok_data.get("tokenizer_class") == "indic_bpe":
             from paragai.tokenizer.indic_bpe import IndicBPETokenizer
 
             tok = IndicBPETokenizer.load(str(tokenizer_path))

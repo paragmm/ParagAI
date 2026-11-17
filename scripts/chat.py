@@ -31,9 +31,12 @@ def main():
     parser.add_argument(
         "--tokenizer", type=str, default="checkpoints/tokenizer.json", help="Path to tokenizer.json"
     )
-    parser.add_argument("--temperature", type=float, default=0.3, help="Sampling temperature")
-    parser.add_argument("--top_k", type=int, default=40, help="Top-k filtering threshold")
-    parser.add_argument("--top_p", type=float, default=0.9, help="Top-p nucleus sampling threshold")
+    parser.add_argument("--temperature", type=float, default=0.2, help="Sampling temperature")
+    parser.add_argument("--top_k", type=int, default=25, help="Top-k filtering threshold")
+    parser.add_argument("--top_p", type=float, default=0.85, help="Top-p nucleus sampling threshold")
+    parser.add_argument(
+        "--repetition_penalty", type=float, default=1.25, help="Penalty for repeating tokens"
+    )
     parser.add_argument(
         "--max_tokens", type=int, default=150, help="Maximum new tokens to generate"
     )
@@ -58,7 +61,10 @@ def main():
         try:
             with open(args.tokenizer, "r", encoding="utf-8") as fh:
                 tok_data = json.load(fh)
-            if tok_data.get("tokenizer_class") == "indic_bpe":
+            if tok_data.get("tokenizer_class") == "fast_indic_bpe":
+                from paragai.tokenizer.fast_indic_bpe import FastIndicBPETokenizer
+                tokenizer = FastIndicBPETokenizer.load(args.tokenizer)
+            elif tok_data.get("tokenizer_class") == "indic_bpe":
                 from paragai.tokenizer.indic_bpe import IndicBPETokenizer
                 tokenizer = IndicBPETokenizer.load(args.tokenizer)
             elif tok_data.get("type") == "bpe":
@@ -128,6 +134,7 @@ def main():
                 temperature=args.temperature,
                 top_k=args.top_k,
                 top_p=args.top_p,
+                repetition_penalty=args.repetition_penalty,
             ):
                 stream_buf += token
 

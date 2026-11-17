@@ -134,7 +134,10 @@ def main():
         logger.info(f"Loading pre-trained tokenizer from {tok_candidate}...")
         with open(tok_candidate, "r", encoding="utf-8") as fh:
             data = json.load(fh)
-        if data.get("tokenizer_class") == "indic_bpe" or args.tokenizer_type == "indic_bpe":
+        if data.get("tokenizer_class") == "fast_indic_bpe":
+            from paragai.tokenizer.fast_indic_bpe import FastIndicBPETokenizer
+            tokenizer = FastIndicBPETokenizer.load(tok_candidate)
+        elif data.get("tokenizer_class") == "indic_bpe" or args.tokenizer_type == "indic_bpe":
             tokenizer = IndicBPETokenizer.load(tok_candidate)
         elif data.get("type") == "bpe":
             tokenizer = BPETokenizer.load(tok_candidate)
