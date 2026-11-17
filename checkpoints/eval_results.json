@@ -7,7 +7,7 @@
     "tools",
     "story"
   ],
-  "timestamp": "2026-11-14T09:27:56Z",
+  "timestamp": "2026-11-17T18:21:01Z",
   "multiling": {
     "per_language": {
       "english": {
@@ -29,71 +29,71 @@
     "overall_pct": 100.0
   },
   "tools": {
-    "valid_json": 3,
-    "total": 5,
-    "pct": 60.0,
-    "details": [
-      {
-        "prompt": "Count lines in src/",
-        "valid": false,
-        "response_preview": ".\"\n\nThe little girl was getting walking on a budle to her dad to see what was wr"
-      },
-      {
-        "prompt": "List all Python files in the project.",
-        "valid": true,
-        "response_preview": "[TASK: automation]\nShow current network configuration and IP addrectory.<|im_end"
-      },
-      {
-        "prompt": "Show me the directory structure.",
-        "valid": false,
-        "response_preview": ".\n\n<|endoftext|>\n\nOnce upon a time, there was a little girl named Lily. She love"
-      },
-      {
-        "prompt": "Find TODO comments in the codebase.",
-        "valid": true,
-        "response_preview": ".\"\n\nThe little girl said, \"How! I assist you for your name?<|im_end|>\n\n<|im_star"
-      },
-      {
-        "prompt": "Run the test suite and report results.",
-        "valid": true,
-        "response_preview": "\n[TASK: automation]\nSwiport the vironment version and interpreter bone in the we"
-      }
-    ]
-  },
-  "story": {
-    "narrative_starts": 0,
+    "valid_json": 0,
     "total": 5,
     "pct": 0.0,
     "details": [
       {
+        "prompt": "Count lines in src/",
+        "valid": false,
+        "response_preview": "\n{\"action\": \"shell\", \"shell\", \"command\": \"command\": \"command\": \"command\": \"comma"
+      },
+      {
+        "prompt": "List all Python files in the project.",
+        "valid": false,
+        "response_preview": "\n{\"action\": \"shell\", \"command\": \"command\": \"command\": \"command\": \"command\": \"com"
+      },
+      {
+        "prompt": "Show me the directory structure.",
+        "valid": false,
+        "response_preview": "\n{\"action\": \"shell\", \"command\": \"shell\", \"command\": \"command\": \"command\": \"comma"
+      },
+      {
+        "prompt": "Find TODO comments in the codebase.",
+        "valid": false,
+        "response_preview": "\n{\"action\": \"shell\", \"command\": \"shell\", \"command\": \"command\": \"command\": \"comma"
+      },
+      {
+        "prompt": "Run the test suite and report results.",
+        "valid": false,
+        "response_preview": "\n{\"action\": \"shell\", \"command\": \"command\": \"command\": \"shell\", \"shell\", \"command"
+      }
+    ]
+  },
+  "story": {
+    "narrative_starts": 1,
+    "total": 5,
+    "pct": 20.0,
+    "details": [
+      {
         "prompt": "Write a short story for me.",
         "narrative_start": false,
-        "first_word": ".\"",
-        "response_preview": ".\"\n\nThe little girl was happy and happy that she decided to get some other side "
+        "first_word": "you",
+        "response_preview": "You are ParagAI, a compact, professional AI assistant built from first principle"
       },
       {
         "prompt": "Tell me a story.",
         "narrative_start": false,
-        "first_word": "",
-        "response_preview": ". He gave him the lady and tried to play with them. He saw a big box of car and "
+        "first_word": "you",
+        "response_preview": "You are ParagAI, a compact, professional AI assistant built from first principle"
       },
       {
         "prompt": "Create a bedtime story.",
         "narrative_start": false,
-        "first_word": "and",
-        "response_preview": " and resour in the air and soon they saw a big gundle in the sky. He was so much"
+        "first_word": "you",
+        "response_preview": "You are an autonomous AI execution agent capable of emitting structured JSON too"
       },
       {
         "prompt": "একটি ছোট গল্প লিখুন।",
         "narrative_start": false,
-        "first_word": "ায়ন।<|im_end|>",
-        "response_preview": "ায়ন।<|im_end|>\n\n<|im_start|>system\nYou are ParagAI, a compact, professional AI a"
+        "first_word": "কেরিন্যারিয়োন্রি",
+        "response_preview": "কেরিন্যারিয়োন্রি প্রিম ব্র্রিকেরিম বার্রিকেরিয়েরিয়োনোন।\n\nsystem\nYou are ParagAI,"
       },
       {
         "prompt": "मुझे एक कहानी सुनाओ।",
-        "narrative_start": false,
-        "first_word": "",
-        "response_preview": ".\n\n<|endoftext|>\n\nOnce upon a time, there was a little girl named Lily. She love"
+        "narrative_start": true,
+        "first_word": "once",
+        "response_preview": "\n\n\nOnce upon a time there was a little girl called Lucy. She was three years old"
       }
     ]
   }

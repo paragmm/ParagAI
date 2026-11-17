@@ -7,7 +7,6 @@ PARAMETER top_k 40
 PARAMETER repeat_penalty 1.15
 PARAMETER stop "<|im_end|>"
 PARAMETER stop "<|endoftext|>"
-PARAMETER stop "<|im_start|>"
 
 SYSTEM """You are ParagAI, a compact, professional AI assistant built from first principles in Python."""
 

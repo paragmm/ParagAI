@@ -37,12 +37,39 @@ def convert_to_gguf(
             raw_bytes = str(raw_token).encode("utf-8")
         return "".join(b2u[b] for b in raw_bytes).encode("utf-8")
 
-    if tok_data.get("type") == "bpe":
+    merges_list = []
+
+    if "model" in tok_data and "vocab" in tok_data["model"]:
+        # Standard Hugging Face Tokenizer (FastIndicBPETokenizer / Rust BPE)
+        hf_model = tok_data["model"]
+        inv_vocab = {v: k for k, v in hf_model["vocab"].items()}
+        tokens = [inv_vocab.get(i, "<unk>").encode("utf-8") for i in range(len(inv_vocab))]
+
+        for entry in hf_model.get("merges", []):
+            if isinstance(entry, (list, tuple)):
+                merges_list.append(f"{entry[0]} {entry[1]}")
+            elif isinstance(entry, str):
+                merges_list.append(entry)
+
+    elif tok_data.get("type") == "bpe":
         vocab_dict = {int(k): v for k, v in tok_data["vocab"].items()}
         tokens = [to_gpt2_token_bytes(vocab_dict.get(i, "<unk>")) for i in range(len(vocab_dict))]
+
+        if "merges" in tok_data:
+            for entry in tok_data["merges"]:
+                if isinstance(entry, dict):
+                    p0, p1 = entry["pair"]
+                else:
+                    p0, p1 = entry[0], entry[1]
+                t0 = tok_data["vocab"].get(str(p0), "")
+                t1 = tok_data["vocab"].get(str(p1), "")
+                merges_list.append(f"{t0} {t1}")
     else:
-        itos = {int(k): v for k, v in tok_data["itos"].items()}
+        itos = {int(k): v for k, v in tok_data.get("itos", {}).items()}
         tokens = [to_gpt2_token_bytes(itos.get(i, "<unk>")) for i in range(len(itos))]
+
+    if not merges_list:
+        merges_list = ["<pad> <unk>"]
 
     writer = gguf.GGUFWriter(output_path, arch="llama")
 
@@ -89,23 +116,6 @@ def convert_to_gguf(
     writer.add_token_scores([0.0] * len(tokens))
 
     # Add merges if BPE, or dummy merge if character-level (llama.cpp requires tokenizer.ggml.merges for gpt2)
-    # Supports two merge formats:
-    #   BPETokenizer  : list of {"pair": [p0, p1], "new_id": n}
-    #   IndicBPETokenizer: list of [p0, p1, new_id]
-    merges_list = []
-    tok_data.get("tokenizer_class", "")
-    if tok_type == "bpe" and "merges" in tok_data:
-        for entry in tok_data["merges"]:
-            if isinstance(entry, dict):
-                p0, p1 = entry["pair"]
-            else:
-                p0, p1 = entry[0], entry[1]
-            t0 = tok_data["vocab"].get(str(p0), "")
-            t1 = tok_data["vocab"].get(str(p1), "")
-            merges_list.append(f"{t0} {t1}")
-    if not merges_list:
-        merges_list = ["<pad> <unk>"]
-
     writer.add_token_merges(merges_list)
 
     writer.add_bos_token_id(2)
