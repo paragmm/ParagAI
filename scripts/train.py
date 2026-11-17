@@ -134,7 +134,11 @@ def main():
         logger.info(f"Loading pre-trained tokenizer from {tok_candidate}...")
         with open(tok_candidate, "r", encoding="utf-8") as fh:
             data = json.load(fh)
-        if data.get("tokenizer_class") == "fast_indic_bpe":
+        if (
+            data.get("tokenizer_class") == "fast_indic_bpe"
+            or "version" in data
+            or "model" in data
+        ):
             from paragai.tokenizer.fast_indic_bpe import FastIndicBPETokenizer
             tokenizer = FastIndicBPETokenizer.load(tok_candidate)
         elif data.get("tokenizer_class") == "indic_bpe" or args.tokenizer_type == "indic_bpe":
@@ -144,8 +148,11 @@ def main():
         else:
             tokenizer = CharTokenizer.load(tok_candidate)
 
-        # Ensure tokenizer.json also contains a copy for downstream tools
-        if os.path.abspath(tok_candidate) != os.path.abspath(target_tok_path):
+        # Ensure tokenizer.json also contains a copy for downstream tools (unless fast_indic_bpe already saved it)
+        if (
+            os.path.abspath(tok_candidate) != os.path.abspath(target_tok_path)
+            and data.get("tokenizer_class") != "fast_indic_bpe"
+        ):
             shutil.copyfile(tok_candidate, target_tok_path)
             logger.info(f"Synced tokenizer state to {target_tok_path}")
     elif args.tokenizer_type == "indic_bpe":

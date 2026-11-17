@@ -50,7 +50,11 @@ def _load_model_and_tokenizer(
     try:
         with open(tokenizer_path, "r", encoding="utf-8") as fh:
             tok_data = json.load(fh)
-        if tok_data.get("tokenizer_class") == "fast_indic_bpe":
+        if (
+            tok_data.get("tokenizer_class") == "fast_indic_bpe"
+            or "version" in tok_data
+            or "model" in tok_data
+        ):
             from paragai.tokenizer.fast_indic_bpe import FastIndicBPETokenizer  # type: ignore[import]
 
             tok = FastIndicBPETokenizer.load(tokenizer_path)

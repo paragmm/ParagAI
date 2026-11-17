@@ -371,7 +371,11 @@ def check_tokenizer_roundtrip(tokenizer_path: Path) -> CheckResult:
         with open(tokenizer_path, "r", encoding="utf-8") as fh:
             tok_data = json.load(fh)
 
-        if tok_data.get("tokenizer_class") == "fast_indic_bpe":
+        if (
+            tok_data.get("tokenizer_class") == "fast_indic_bpe"
+            or "version" in tok_data
+            or "model" in tok_data
+        ):
             from paragai.tokenizer.fast_indic_bpe import FastIndicBPETokenizer
 
             tok = FastIndicBPETokenizer.load(str(tokenizer_path))
@@ -405,8 +409,10 @@ def check_tokenizer_roundtrip(tokenizer_path: Path) -> CheckResult:
                 detail="Roundtrip failures: " + "; ".join(failures),
             )
 
-        tok_type = tok_data.get("tokenizer_class") or tok_data.get("type", "unknown")
-        vocab_len = len(getattr(tok, "vocab", getattr(tok, "stoi", [])))
+        tok_type = tok_data.get("tokenizer_class") or (
+            "fast_indic_bpe" if "version" in tok_data or "model" in tok_data else tok_data.get("type", "unknown")
+        )
+        vocab_len = getattr(tok, "vocab_size", len(getattr(tok, "vocab", getattr(tok, "stoi", []))))
         return CheckResult(
             name=name,
             passed=True,
