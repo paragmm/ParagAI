@@ -47,10 +47,14 @@ class FastIndicBPETokenizer:
     UNK_ID: int = 1
     BOS_ID: int = 2
     EOS_ID: int = 3
-    IM_START_ID: int = 4
-    IM_END_ID: int = 5
-    ENDOFTEXT_ID: int = 6
-    TOOL_CALL_ID: int = 7
+    SYSTEM_ID: int = 4
+    USER_ID: int = 5
+    ASSISTANT_ID: int = 6
+    END_ID: int = 7
+    IM_START_ID: int = 8
+    IM_END_ID: int = 9
+    ENDOFTEXT_ID: int = 10
+    TOOL_CALL_ID: int = 11
 
     def __init__(self, vocab_size: int = 4096) -> None:
         if vocab_size not in VALID_VOCAB_SIZES:
@@ -287,10 +291,21 @@ class FastIndicBPETokenizer:
         with open(file_path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
 
-        tok = cls(vocab_size=data.get("target_vocab_size", 4096))
-        if HAS_TOKENIZERS and os.path.exists(hf_path):
-            tok._hf_tokenizer = Tokenizer.from_file(hf_path)
+        target_size = data.get("target_vocab_size", 4096)
+        if target_size not in VALID_VOCAB_SIZES:
+            target_size = 4096
+        tok = cls(vocab_size=target_size)
+        if HAS_TOKENIZERS and (os.path.exists(hf_path) or "version" in data or "model" in data):
+            actual_hf_path = file_path if ("version" in data or "model" in data) else hf_path
+            tok._hf_tokenizer = Tokenizer.from_file(actual_hf_path)
             tok._backend = "rust"
+            # Ensure ParagAI chat special tokens are registered
+            new_specials = [
+                s for s in ["<|system|>", "<|user|>", "<|assistant|>", "<|end|>"]
+                if tok._hf_tokenizer.token_to_id(s) is None
+            ]
+            if new_specials:
+                tok.add_special_tokens(new_specials)
         else:
             # Fallback load
             tok._fallback_tokenizer = IndicBPETokenizer.load(file_path)
@@ -298,3 +313,31 @@ class FastIndicBPETokenizer:
             tok._hf_tokenizer = None
 
         return tok
+
+    def token_to_id(self, token: str) -> int | None:
+        """Return the token ID for a given string token."""
+        if self._hf_tokenizer is not None:
+            return self._hf_tokenizer.token_to_id(token)
+        if self._fallback_tokenizer is not None:
+            if token in self._fallback_tokenizer.special_tokens:
+                return self._fallback_tokenizer.special_tokens.index(token)
+            for tid, b in self._fallback_tokenizer.vocab.items():
+                if b.decode("utf-8", errors="ignore") == token:
+                    return tid
+        return None
+
+    def add_special_tokens(self, special_tokens: list[str]) -> int:
+        """Register additional special tokens into the tokenizer."""
+        count = 0
+        if self._hf_tokenizer is not None:
+            count = self._hf_tokenizer.add_special_tokens(special_tokens)
+            for tok in special_tokens:
+                if tok not in self.special_tokens:
+                    self.special_tokens.append(tok)
+        elif self._fallback_tokenizer is not None:
+            for tok in special_tokens:
+                if tok not in self._fallback_tokenizer.special_tokens:
+                    self._fallback_tokenizer.special_tokens.append(tok)
+                    self.special_tokens.append(tok)
+                    count += 1
+        return count

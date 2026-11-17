@@ -1,4 +1,4 @@
-"""Command-line script to train ParagAI models."""
+"""Command-line script to train ParagAI models with Two-Stage Pipeline (Pre-training + SFT)."""
 
 import os
 import sys
@@ -20,7 +20,7 @@ from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.bpe_tokenizer import BPETokenizer
 from paragai.tokenizer.char_tokenizer import CharTokenizer
 from paragai.tokenizer.indic_bpe import IndicBPETokenizer
-from paragai.training.dataset import TextDataset
+from paragai.training.dataset import SFTDataset, TextDataset
 from paragai.training.trainer import Trainer
 from paragai.utils.logger import get_logger
 from paragai.utils.seed import set_seed
@@ -31,6 +31,13 @@ logger = get_logger("TrainScript")
 def main():
     parser = argparse.ArgumentParser(description="Train a ParagAI language model")
     parser.add_argument(
+        "--stage",
+        type=str,
+        choices=["pretrain", "sft"],
+        default="pretrain",
+        help="Training stage: 'pretrain' (TinyStories, LR ~4e-4) or 'sft' (Chat/Tools, LR ~3e-5)",
+    )
+    parser.add_argument(
         "--config", type=str, default="configs/train_config.yaml", help="Path to train config YAML"
     )
     parser.add_argument(
@@ -40,13 +47,19 @@ def main():
         help="Path to model config YAML",
     )
     parser.add_argument(
-        "--data", type=str, default="data/raw/input.txt", help="Path to training text file"
+        "--data", type=str, default=None, help="Path to training text file (auto-detected by stage if omitted)"
+    )
+    parser.add_argument(
+        "--pretrained_checkpoint",
+        type=str,
+        default="checkpoints/pretrained_model.pt",
+        help="Base checkpoint to load for Stage 2 SFT fine-tuning",
     )
     parser.add_argument(
         "--tokenizer_type",
         type=str,
         choices=["char", "bpe", "indic_bpe"],
-        default="bpe",
+        default="indic_bpe",
         help="Tokenizer type",
     )
     parser.add_argument(
@@ -54,6 +67,9 @@ def main():
         type=str,
         default=None,
         help="Path to pre-trained tokenizer JSON (e.g. checkpoints/tokenizer_indic.json)",
+    )
+    parser.add_argument(
+        "--learning_rate", type=float, default=None, help="Override learning rate for this stage"
     )
     parser.add_argument(
         "--max_iters", type=int, default=None, help="Override max training iterations"
@@ -74,6 +90,16 @@ def main():
     with open(args.config, "r", encoding="utf-8") as f:
         train_yaml = yaml.safe_load(f)["training"]
 
+    # Stage-aware default learning rates
+    if args.learning_rate is not None:
+        train_yaml["learning_rate"] = args.learning_rate
+    elif args.stage == "sft":
+        train_yaml["learning_rate"] = 3e-5
+        logger.info("Stage 2 SFT mode: defaulted learning rate to 3e-5")
+    else:
+        # Default pretrain lr: 4e-4 unless specified in yaml
+        train_yaml["learning_rate"] = train_yaml.get("learning_rate", 4e-4)
+
     # Command line overrides for train config
     if args.max_iters is not None:
         train_yaml["max_iters"] = args.max_iters
@@ -87,32 +113,23 @@ def main():
     with open(args.model_config, "r", encoding="utf-8") as f:
         model_yaml = yaml.safe_load(f)["model"]
 
-    # If data path is a directory, automatically merge all text files
-    if os.path.isdir(args.data):
-        try:
-            from scripts.prepare_data import merge_categorized_files
-        except ImportError:
-            from prepare_data import merge_categorized_files
-        processed_file = "data/processed/combined_corpus.txt"
-        logger.info(
-            f"Directory detected at '{args.data}'. Merging all files into '{processed_file}'..."
-        )
-        merge_categorized_files(raw_dir=args.data, output_file=processed_file)
-        args.data = processed_file
+    # Resolve training data file by stage if not specified
+    if args.data is None:
+        if args.stage == "pretrain":
+            args.data = "data/processed/pretrain_corpus.txt"
+        else:
+            args.data = "data/processed/sft_corpus.txt"
 
-    # Load or generate sample text if not found
+    # Auto-generate dataset file if missing
     if not os.path.exists(args.data):
-        logger.info(f"Training data not found at {args.data}. Creating default sample corpus...")
-        os.makedirs(os.path.dirname(args.data), exist_ok=True)
-        sample_text = (
-            "ParagAI is an intelligent autoregressive language model designed and built from scratch.\n"
-            "First-principles engineering enables full mastery of neural attention and gradient descent.\n"
-            "To be, or not to be, that is the question:\n"
-            "Whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune,\n"
-            "Or to take arms against a sea of troubles and by opposing end them.\n"
-        ) * 50
-        with open(args.data, "w", encoding="utf-8") as f:
-            f.write(sample_text)
+        from scripts.prepare_data import prepare_pretrain_corpus, prepare_sft_corpus
+
+        if args.stage == "pretrain":
+            logger.info(f"Pre-train data not found. Compiling {args.data}...")
+            prepare_pretrain_corpus(output_file=args.data)
+        else:
+            logger.info(f"SFT data not found. Compiling {args.data}...")
+            prepare_sft_corpus(output_file=args.data)
 
     with open(args.data, "r", encoding="utf-8") as f:
         text = f.read()
@@ -122,12 +139,13 @@ def main():
     os.makedirs(tok_dir, exist_ok=True)
     target_tok_path = os.path.join(tok_dir, "tokenizer.json")
 
-    # If user provided a specific path, or if tokenizer_indic.json exists in checkpoint_dir
     tok_candidate = args.tokenizer_path
     if not tok_candidate:
         indic_default = os.path.join(tok_dir, "tokenizer_indic.json")
-        if os.path.exists(indic_default) and args.tokenizer_type in ["bpe", "indic_bpe"]:
+        if os.path.exists(indic_default):
             tok_candidate = indic_default
+        elif os.path.exists(target_tok_path):
+            tok_candidate = target_tok_path
 
     tokenizer = None
     if tok_candidate and os.path.exists(tok_candidate):
@@ -148,7 +166,6 @@ def main():
         else:
             tokenizer = CharTokenizer.load(tok_candidate)
 
-        # Ensure tokenizer.json also contains a copy for downstream tools (unless fast_indic_bpe already saved it)
         if (
             os.path.abspath(tok_candidate) != os.path.abspath(target_tok_path)
             and data.get("tokenizer_class") != "fast_indic_bpe"
@@ -167,29 +184,67 @@ def main():
         tokenizer = CharTokenizer(list(text))
         tokenizer.save(target_tok_path)
 
+    # Ensure special tokens are registered
+    special_needed = ["<|system|>", "<|user|>", "<|assistant|>", "<|end|>"]
+    if hasattr(tokenizer, "add_special_tokens"):
+        tokenizer.add_special_tokens(special_needed)
+
     # Update vocab_size in model config to match tokenizer
     model_yaml["vocab_size"] = tokenizer.vocab_size
     model_config = ModelConfig(**model_yaml)
-
-    logger.info("Tokenizing dataset line-by-line (ultra-fast mode)...")
-    lines = text.splitlines(keepends=True)
-    token_ids: list[int] = []
-    total_lines = len(lines)
-    for idx, line in enumerate(lines):
-        if line:
-            token_ids.extend(tokenizer.encode(line))
-        if (idx + 1) % 2500 == 0 or (idx + 1) == total_lines:
-            logger.info(f"Tokenized {idx + 1:,}/{total_lines:,} lines ({len(token_ids):,} tokens)...")
-
-    dataset = TextDataset(np.array(token_ids, dtype=np.int32), val_ratio=0.1)
     model = ParagAIModel(model_config)
 
-    trainer = Trainer(model, dataset, train_config)
+    # Prepare dataset according to stage
+    if args.stage == "sft":
+        logger.info("Initializing SFTDataset with assistant loss masking (-100)...")
+        dataset = SFTDataset.from_text(text, tokenizer=tokenizer, val_ratio=0.1)
+    else:
+        logger.info("Tokenizing Stage 1 pre-training corpus line-by-line...")
+        lines = text.splitlines(keepends=True)
+        token_ids: list[int] = []
+        total_lines = len(lines)
+        for idx, line in enumerate(lines):
+            if line:
+                token_ids.extend(tokenizer.encode(line))
+            if (idx + 1) % 5000 == 0 or (idx + 1) == total_lines:
+                logger.info(f"Tokenized {idx + 1:,}/{total_lines:,} lines ({len(token_ids):,} tokens)...")
+        dataset = TextDataset(np.array(token_ids, dtype=np.int32), val_ratio=0.1)
 
+    trainer = Trainer(model, dataset, train_config, tokenizer=tokenizer)
+
+    # Load weights for SFT or resume
     if args.resume:
-        trainer.load_checkpoint(args.resume)
+        logger.info(f"Resuming training from checkpoint: {args.resume}")
+        trainer.load_checkpoint(args.resume, load_optimizer=True)
+    elif args.stage == "sft":
+        # In SFT stage, attempt to load the pre-trained base model
+        base_ckpt = args.pretrained_checkpoint
+        if not os.path.exists(base_ckpt):
+            # Fall back to best_model.pt if available
+            alt_ckpt = os.path.join(train_config.checkpoint_dir, "best_model.pt")
+            if os.path.exists(alt_ckpt):
+                base_ckpt = alt_ckpt
 
+        if os.path.exists(base_ckpt):
+            logger.info(f"Stage 2 SFT: Loading pre-trained base checkpoint from {base_ckpt}...")
+            trainer.load_checkpoint(base_ckpt, load_optimizer=False)
+            # Ensure model embeddings match current tokenizer vocab size
+            if model.config.vocab_size != tokenizer.vocab_size:
+                logger.info(f"Resizing model embeddings to match tokenizer vocab ({tokenizer.vocab_size})...")
+                model.resize_token_embeddings(tokenizer.vocab_size)
+        else:
+            logger.warning(
+                f"No pre-trained checkpoint found at {base_ckpt}. Training SFT from scratch."
+            )
+
+    logger.info(f"Launching ParagAI Training [Stage: {args.stage.upper()}]...")
     trainer.train()
+
+    # Save final stage checkpoints
+    stage_ckpt_name = "sft_model.pt" if args.stage == "sft" else "pretrained_model.pt"
+    trainer.save_checkpoint(os.path.join(train_config.checkpoint_dir, stage_ckpt_name))
+    trainer.save_checkpoint(os.path.join(train_config.checkpoint_dir, "best_model.pt"))
+    logger.info(f"Stage {args.stage.upper()} completed. Checkpoints saved to {train_config.checkpoint_dir}")
 
 
 if __name__ == "__main__":

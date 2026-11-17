@@ -104,12 +104,37 @@ class ParagAIModel(nn.Module):
             loss = F.cross_entropy(
                 logits.view(-1, self.config.vocab_size),
                 targets.view(-1),
-                ignore_index=-1,
+                ignore_index=-100,
             )
 
         if use_cache:
             return logits, loss, new_kv_caches
         return logits, loss
+
+    def resize_token_embeddings(self, new_num_tokens: int) -> nn.Embedding:
+        """Resize token embedding matrix and tied LM head to new_num_tokens."""
+        old_embeddings = self.token_embedding
+        old_num_tokens, old_dim = old_embeddings.weight.size()
+        if new_num_tokens == old_num_tokens:
+            return self.token_embedding
+
+        device = old_embeddings.weight.device
+        dtype = old_embeddings.weight.dtype
+
+        new_embeddings = nn.Embedding(new_num_tokens, old_dim, device=device, dtype=dtype)
+        torch.nn.init.normal_(new_embeddings.weight, mean=0.0, std=0.02)
+
+        n = min(old_num_tokens, new_num_tokens)
+        with torch.no_grad():
+            new_embeddings.weight[:n, :] = old_embeddings.weight[:n, :]
+
+        new_lm_head = nn.Linear(old_dim, new_num_tokens, bias=False, device=device, dtype=dtype)
+        new_lm_head.weight = new_embeddings.weight
+
+        self.token_embedding = new_embeddings
+        self.lm_head = new_lm_head
+        self.config.vocab_size = new_num_tokens
+        return self.token_embedding
 
     def count_parameters(self) -> int:
         """Count total trainable parameters."""

@@ -1,19 +1,24 @@
-"""Synthesizes high-quality, professional multi-task SFT (Supervised Fine-Tuning) datasets.
+"""Synthesizes high-quality, professional English SFT (Supervised Fine-Tuning) datasets.
 
 Generates diverse samples across:
-1. Chat & Persona (English & Bengali greetings, identity, reasoning, coding, science)
-2. High-precision Translation (English <-> Bengali)
+1. Chat & Persona (English greetings, identity, reasoning, coding, science)
+2. Technical QA (Python, Transformer architectures, Machine Learning)
 3. Autonomous Automation & Tool Calling (Structured JSON actions)
+
+All examples follow the strict ParagAI Chat Template:
+<|system|>{system_message}<|end|>
+<|user|>{user_message}<|end|>
+<|assistant|>{assistant_response}<|end|>
 """
 
 import os
 
 # ==============================================================================
-# 1. CORE CHAT & PERSONA EXAMPLES (English & Bengali)
+# 1. CORE ENGLISH CHAT & PERSONA EXAMPLES
 # ==============================================================================
 
-CHAT_DATA = [
-    # Identity & Greetings (English)
+ENGLISH_CHAT_DATA = [
+    # Identity & Greetings
     ("Hello!", "Hello! I am ParagAI, your AI assistant. How can I help you today?"),
     ("Hi there", "Hello! It is a pleasure to meet you. What would you like to work on today?"),
     ("Good morning", "Good morning! I hope you have a productive day ahead. How may I assist you?"),
@@ -30,7 +35,7 @@ CHAT_DATA = [
     ("Who made you?", "I was designed, architected, and trained from scratch by Parag."),
     (
         "What can you do?",
-        "I can assist you with interactive chat, answer technical questions, translate between English and Bengali, explain code, and format automation tasks for execution.",
+        "I can assist you with interactive chat, answer technical questions, explain code, and format structured automation tasks for execution.",
     ),
     (
         "Tell me about yourself.",
@@ -45,22 +50,9 @@ CHAT_DATA = [
         "You are very welcome! If you have any more questions, feel free to ask anytime.",
     ),
     ("Thanks for your help.", "Glad I could assist you! Let me know if you need anything else."),
-    # Identity & Greetings (Bengali)
-    ("হ্যালো", "হ্যালো! আমি ParagAI, আপনার কৃত্রিম বুদ্ধিমত্তা সহকারী। আজ আপনাকে কীভাবে সাহায্য করতে পারি?"),
-    ("নমস্কার", "নমস্কার! ParagAI-তে আপনাকে স্বাগতম। আমি আপনাকে কীভাবে সহায়তা করতে পারি?"),
-    ("কেমন আছো?", "আমি খুব ভালো আছি এবং আপনাকে সহায়তা করতে প্রস্তুত! আপনি কেমন আছেন?"),
-    ("তোমার নাম কী?", "আমার নাম ParagAI। আমি একটি স্বয়ংক্রিয় কৃত্রিম বুদ্ধিমত্তা সহকারী।"),
-    ("তোমাকে কে বানিয়েছে?", "আমাকে প্রথম থেকে পাইথন ও পাইটর্চ ব্যবহার করে তৈরি ও ট্রেইন করেছেন পরাগ (Parag)।"),
-    (
-        "তোমাকে কে তৈরি করেছে?",
-        "আমার নির্মাতা হলেন পরাগ। তিনি শূন্য থেকে গণিত ও ট্রান্সফরমার আর্কিটেকচার বাস্তবায়ন করে আমাকে গড়ে তুলেছেন।",
-    ),
-    (
-        "তুমি কী কাজ করতে পারো?",
-        "আমি আপনার সাথে কথোপকথন করতে পারি, বিজ্ঞান ও প্রোগ্রামিংয়ের প্রশ্নের উত্তর দিতে পারি, ইংরেজি থেকে বাংলায় অনুবাদ করতে পারি এবং বিভিন্ন অটোমেশন কমান্ড তৈরি করতে পারি।",
-    ),
-    ("ধন্যবাদ", "আপনাকে অনেক ধন্যবাদ! আপনার কোনো প্রশ্ন বা প্রয়োজন থাকলে নির্দ্বিধায় বলুন।"),
-    ("অনেক সাহায্য হলো", "আপনাকে সাহায্য করতে পেরে আমি আনন্দিত! আর কোনো কিছু জানতে চাইলে বলুন।"),
+    ("Are you an AI?", "Yes, I am ParagAI, an autoregressive language model built from scratch."),
+    ("What is your purpose?", "My purpose is to assist developers and users with coding, reasoning, and automated system commands."),
+    
     # Technical QA (Python & Computer Science)
     (
         "What is a Transformer model?",
@@ -106,109 +98,34 @@ CHAT_DATA = [
         "What is backpropagation?",
         "Backpropagation is the algorithm used to train neural networks. It computes the gradient of the loss function with respect to every weight parameter using the calculus chain rule, propagating errors backward from output to input layers.",
     ),
-    # Bengali Knowledge & Programming QA
     (
-        "মেশিন লার্নিং কী?",
-        "মেশিন লার্নিং হলো কৃত্রিম বুদ্ধিমত্তার এমন একটি শাখা যেখানে কম্পিউটারকে সরাসরি নিয়ম প্রোগ্রাম করে দেওয়ার বদলে বিপুল উপাত্ত (Data) বিশ্লেষণের মাধ্যমে স্বয়ংক্রিয়ভাবে নিয়ম ও প্যাটার্ন শিখতে দেওয়া হয়।",
+        "What is gradient descent?",
+        "Gradient descent is an optimization algorithm that iteratively adjusts model parameters in the direction of the steepest decrease of the loss function to minimize prediction errors.",
     ),
     (
-        "পাইথন প্রোগ্রামিং কেন এত জনপ্রিয়?",
-        "পাইথনের সহজবোধ্য সিনট্যাক্স, মানবভাষার কাছাকাছি গঠন, বিশাল লাইব্রেরি সমাহার (যেমন NumPy, PyTorch, Pandas) এবং ডেটা সায়েন্স ও এআই-তে বিস্তৃত ব্যবহারের কারণে এটি সারা বিশ্বে অত্যন্ত জনপ্রিয়।",
+        "What is cross-entropy loss?",
+        "Cross-entropy loss measures the performance of a classification model whose output is a probability value between 0 and 1. It penalizes incorrect predictions with logarithmically increasing severity.",
     ),
     (
-        "পাইটর্চ (PyTorch) কী?",
-        "পাইটর্চ হলো একটি ওপেন-সোর্স ডিপ লার্নিং ফ্রেমওয়ার্ক যা ফেসবুকের ফেয়ার ল্যাব তৈরি করেছে। এটি ডায়নামিক কম্পিউটেশনাল গ্রাফ এবং স্বয়ংক্রিয় ডিফারেনসিয়েশন (Autograd) সুবিধাসহ দ্রুত নিউরাল নেটওয়ার্ক তৈরিতে ব্যবহৃত হয়।",
+        "Why do we use AdamW instead of standard Adam?",
+        "AdamW decouples weight decay from gradient updates. In standard Adam with L2 regularization, weights with large historical gradients decay slower, whereas AdamW applies direct proportional decay to all weights uniformly.",
     ),
     (
-        "কৃত্রিম বুদ্ধিমত্তার ভবিষ্যৎ কেমন?",
-        "কৃত্রিম বুদ্ধিমত্তা চিকিৎসা, শিক্ষা, মহাকাশ গবেষণা, রোবোটিক্স এবং স্বয়ংক্রিয় শিল্প উৎপাদনে মানবজাতিকে অসীম সুযোগ এনে দিচ্ছে। সঠিক নিরাপত্তা ও নৈতিকতার সাথে এর ব্যবহার ভবিষ্যৎ বিশ্বকে বদলে দেবে।",
+        "What is BPE tokenization?",
+        "Byte-Pair Encoding (BPE) is a subword tokenization algorithm that iteratively merges the most frequent pairs of adjacent bytes or characters in a text corpus, creating a compact and expressive vocabulary.",
     ),
     (
-        "কম্পিউটারের র‍্যাম (RAM) এর কাজ কী?",
-        "র‍্যাম হলো কম্পিউটারের স্বল্পমেয়াদী অস্থায়ী মেমরি। প্রসেসর যখন কোনো অ্যাপ বা কাজ চালায়, তখন প্রয়োজনীয় সব উপাত্ত দ্রুত প্রক্রিয়াকরণের জন্য র‍্যামে সাময়িকভাবে জমা রাখা হয়।",
-    ),
-]
-
-# ==============================================================================
-# 2. HIGH-PRECISION TRANSLATION EXAMPLES (EN <-> BN)
-# ==============================================================================
-
-TRANSLATION_PAIRS = [
-    ("Artificial intelligence is transforming society.", "কৃত্রিম বুদ্ধিমত্তা সমাজকে রূপান্তরিত করছে।"),
-    (
-        "Machine learning models learn patterns from empirical data.",
-        "মেশিন লার্নিং মডেলগুলো বাস্তবিক উপাত্ত থেকে প্যাটার্ন বা নিয়ম শেখে।",
+        "What is temperature in text generation?",
+        "Temperature scales the logits prior to the softmax calculation. Lower temperatures (e.g. 0.2 to 0.4) make the model more deterministic and focused, while higher temperatures (e.g. 0.7 to 1.0) increase diversity and randomness.",
     ),
     (
-        "Python is celebrated for its clean and readable syntax.",
-        "পাইথন তার পরিষ্কার এবং সহজে পাঠযোগ্য সিনট্যাক্সের জন্য প্রশংসিত।",
-    ),
-    (
-        "The Transformer architecture was introduced in 2017.",
-        "২০১৭ সালে ট্রান্সফরমার আর্কিটেকচার প্রথমবারের মতো পরিচিত হয়।",
-    ),
-    (
-        "Self-attention allows the network to process words simultaneously.",
-        "সেলফ-অ্যাটেনশন নেটওয়ার্ককে একসাথে একাধিক শব্দ প্রসেস করতে সাহায্য করে।",
-    ),
-    (
-        "Neural networks are inspired by biological brain functions.",
-        "নিউরাল নেটওয়ার্ক জৈবিক মস্তিষ্কের কাজের প্রক্রিয়া দ্বারা অনুপ্রাণিত।",
-    ),
-    ("Knowledge is the greatest power in the universe.", "জ্ঞান হলো মহাবিশ্বের সর্বশ্রেষ্ঠ শক্তি।"),
-    (
-        "Hard work and perseverance lead to lasting success.",
-        "কঠোর পরিশ্রম এবং অধ্যবসায় দীর্ঘস্থায়ী সাফল্য বয়ে আনে।",
-    ),
-    ("The sun rises in the east and sets in the west.", "সূর্য পূর্ব দিকে ওঠে এবং পশ্চিম দিকে অস্ত যায়।"),
-    (
-        "Computers process binary data using microscopic transistors.",
-        "কম্পিউটার আণুবীক্ষণিক ট্রানজিস্টর ব্যবহার করে বাইনারি ডেটা প্রক্রিয়াজাত করে।",
-    ),
-    (
-        "Reading books expands our imagination and critical thinking.",
-        "বই পড়া আমাদের কল্পনাশক্তি এবং সূক্ষ্ম চিন্তাভাবনাকে প্রসারিত করে।",
-    ),
-    (
-        "Nature provides us with clean water, air, and resources.",
-        "প্রকৃতি আমাদের বিশুদ্ধ পানি, বাতাস এবং সম্পদ সরবরাহ করে।",
-    ),
-    (
-        "Clean code is easy to read, test, and maintain.",
-        "পরিষ্কার কোড পড়া, টেস্ট করা এবং রক্ষণাবেক্ষণ করা সহজ।",
-    ),
-    (
-        "Open source software enables global collaborative innovation.",
-        "ওপেন সোর্স সফটওয়্যার বিশ্বব্যাপী সম্মিলিত উদ্ভাবনকে সম্ভব করে তোলে।",
-    ),
-    (
-        "Deep learning has achieved breakthroughs in computer vision and natural language processing.",
-        "ডিপ লার্নিং কম্পিউটার ভিশন এবং ন্যাচারাল ল্যাঙ্গুয়েজ প্রসেসিংয়ে যুগান্তকারী সাফল্য অর্জন করেছে।",
-    ),
-    (
-        "Continuous practice makes a programmer truly proficient.",
-        "ধারাবাহিক অনুশীলন একজন প্রোগ্রামারকে সত্যিই দক্ষ করে তোলে।",
-    ),
-    (
-        "Education is the backbone of a progressive and civilized nation.",
-        "শিক্ষা একটি প্রগতিশীল এবং সভ্য জাতির মেরুদণ্ড।",
-    ),
-    (
-        "Data science discovers hidden insights within complex datasets.",
-        "ডেটা সায়েন্স জটিল ডেটাসেটের ভেতর থেকে গোপন তথ্য ও অন্তর্দৃষ্টি উন্মোচন করে।",
-    ),
-    (
-        "Mathematics provides the fundamental logic of all sciences.",
-        "গণিত সমস্ত বিজ্ঞানের মৌলিক যুক্তি প্রদান করে।",
-    ),
-    (
-        "Honesty and integrity are the foundation of true character.",
-        "সততা এবং নিষ্ঠা হলো প্রকৃত চরিত্রের ভিত্তি।",
+        "What is top-p nucleus sampling?",
+        "Top-p nucleus sampling restricts candidate tokens to the smallest subset whose cumulative probability exceeds the threshold p. This cuts off the improbable long tail of tokens while adapting dynamically to the model's confidence.",
     ),
 ]
 
 # ==============================================================================
-# 3. AUTOMATION & TOOL-CALLING EXAMPLES
+# 2. AUTOMATION & TOOL-CALLING EXAMPLES (Pure JSON output)
 # ==============================================================================
 
 AUTOMATION_TASKS = [
@@ -252,95 +169,57 @@ AUTOMATION_TASKS = [
         "Export the current trained model to GGUF format.",
         '{"action": "shell", "command": "python scripts/export_gguf.py --input_dir checkpoints/export_hf --output checkpoints/paragai.gguf"}',
     ),
+    (
+        "Run the ParagAI diagnostic doctor script.",
+        '{"action": "shell", "command": "python scripts/doctor.py"}',
+    ),
+    (
+        "Format code across the repository with black.",
+        '{"action": "shell", "command": "black src/ scripts/ tests/"}',
+    ),
 ]
 
 
-def build_chatml_entry(system_prompt: str, user_prompt: str, assistant_response: str) -> str:
-    """Format a single dialogue turn into standard ChatML syntax."""
+def format_chat_entry(system_prompt: str, user_prompt: str, assistant_response: str) -> str:
+    """Format a single dialogue turn into standard ParagAI Chat Template."""
     return (
-        f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
-        f"<|im_start|>user\n{user_prompt}<|im_end|>\n"
-        f"<|im_start|>assistant\n{assistant_response}<|im_end|>\n\n"
+        f"<|system|>{system_prompt}<|end|>\n"
+        f"<|user|>{user_prompt}<|end|>\n"
+        f"<|assistant|>{assistant_response}<|end|>\n\n"
     )
 
 
 def generate_sft_dataset(
-    output_dir: str = "data/raw",
-    multiplier: int = 15,
+    output_file: str = "data/processed/sft_corpus.txt",
+    multiplier: int = 20,
 ) -> None:
-    """Compile rich multi-task dataset files into data/raw/."""
-    os.makedirs(f"{output_dir}/chat", exist_ok=True)
-    os.makedirs(f"{output_dir}/translation", exist_ok=True)
-    os.makedirs(f"{output_dir}/automation", exist_ok=True)
+    """Compile uniform, English-only SFT dataset file."""
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    default_system = "You are ParagAI, a compact, professional AI assistant built from first principles in Python."
+    default_system = "You are ParagAI, a compact, professional AI assistant."
+    tool_system = "You are an autonomous AI execution agent capable of emitting structured JSON tool commands."
 
-    # 1. Write Chat Data
-    chat_file = f"{output_dir}/chat/conversations_sft.txt"
-    with open(chat_file, "w", encoding="utf-8") as f:
-        for _ in range(multiplier):
-            for user_msg, asst_msg in CHAT_DATA:
-                entry = build_chatml_entry(default_system, user_msg, asst_msg)
-                f.write(entry)
+    entries = []
 
-    # 2. Write Translation Data (EN -> BN and BN -> EN)
-    trans_file = f"{output_dir}/translation/parallel_sft.txt"
-    with open(trans_file, "w", encoding="utf-8") as f:
-        for _ in range(multiplier):
-            # EN -> BN
-            for en, bn in TRANSLATION_PAIRS:
-                prompt = f"[TASK: translate | source: en | target: bn]\n{en}"
-                entry = build_chatml_entry(
-                    "You are a professional bilingual translation engine between English and Bengali.",
-                    prompt,
-                    bn,
-                )
-                f.write(entry)
+    # 1. English Chat & Technical QA
+    for _ in range(multiplier):
+        for user_msg, asst_msg in ENGLISH_CHAT_DATA:
+            entries.append(format_chat_entry(default_system, user_msg, asst_msg))
 
-            # BN -> EN
-            for en, bn in TRANSLATION_PAIRS:
-                prompt = f"[TASK: translate | source: bn | target: en]\n{bn}"
-                entry = build_chatml_entry(
-                    "You are a professional bilingual translation engine between English and Bengali.",
-                    prompt,
-                    en,
-                )
-                f.write(entry)
+    # 2. Automation & Tool Calling
+    for _ in range(multiplier):
+        for user_msg, json_action in AUTOMATION_TASKS:
+            entries.append(format_chat_entry(tool_system, user_msg, json_action))
 
-    # 3. Write Automation & Tool-Calling Data
-    auto_file = f"{output_dir}/automation/tools_sft.txt"
-    with open(auto_file, "w", encoding="utf-8") as f:
-        for _ in range(multiplier):
-            for task_desc, json_action in AUTOMATION_TASKS:
-                prompt = f"[TASK: automation]\n{task_desc}"
-                response = f"<|tool_call|>\n{json_action}"
-                entry = build_chatml_entry(
-                    "You are an autonomous AI execution agent capable of emitting structured JSON tool commands.",
-                    prompt,
-                    response,
-                )
-                f.write(entry)
+    with open(output_file, "w", encoding="utf-8") as out:
+        for entry in entries:
+            out.write(entry)
 
-    # Also build a single combined SFT corpus under data/processed/
-    os.makedirs("data/processed", exist_ok=True)
-    combined_file = "data/processed/multi_task_sft_corpus.txt"
-    total_lines = 0
-    total_bytes = 0
-    with open(combined_file, "w", encoding="utf-8") as out:
-        for path in [chat_file, trans_file, auto_file]:
-            with open(path, "r", encoding="utf-8") as inp:
-                data = inp.read()
-                out.write(data)
-                total_bytes += len(data.encode("utf-8"))
-                total_lines += data.count("\n")
-
-    print("=== ParagAI Professional SFT Dataset Generated ===")
-    print(f"Chat File:        {chat_file}")
-    print(f"Translation File: {trans_file}")
-    print(f"Automation File:  {auto_file}")
-    print(f"Combined File:    {combined_file}")
-    print(f"Total Characters: {total_bytes:,} bytes")
-    print(f"Total Lines:      {total_lines:,}")
+    total_bytes = sum(len(e.encode("utf-8")) for e in entries)
+    print("=== ParagAI Standardized SFT Dataset Generated ===")
+    print(f"Output File:      {output_file}")
+    print(f"Total Dialogues:  {len(entries):,}")
+    print(f"Total Size:       {total_bytes:,} bytes")
 
 
 if __name__ == "__main__":

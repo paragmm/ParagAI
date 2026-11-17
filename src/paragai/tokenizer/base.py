@@ -11,10 +11,30 @@ class BaseTokenizer(ABC):
     BOS_TOKEN = "<bos>"
     EOS_TOKEN = "<eos>"
 
+    SYSTEM_TOKEN = "<|system|>"
+    USER_TOKEN = "<|user|>"
+    ASSISTANT_TOKEN = "<|assistant|>"
+    END_TOKEN = "<|end|>"
+
     PAD_ID = 0
     UNK_ID = 1
     BOS_ID = 2
     EOS_ID = 3
+    SYSTEM_ID = 4
+    USER_ID = 5
+    ASSISTANT_ID = 6
+    END_ID = 7
+
+    SPECIAL_TOKENS: list[str] = [
+        PAD_TOKEN,
+        UNK_TOKEN,
+        BOS_TOKEN,
+        EOS_TOKEN,
+        SYSTEM_TOKEN,
+        USER_TOKEN,
+        ASSISTANT_TOKEN,
+        END_TOKEN,
+    ]
 
     @abstractmethod
     def encode(self, text: str, add_special_tokens: bool = False) -> list[int]:

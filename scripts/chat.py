@@ -31,23 +31,23 @@ def main():
     parser.add_argument(
         "--tokenizer", type=str, default="checkpoints/tokenizer.json", help="Path to tokenizer.json"
     )
-    parser.add_argument("--temperature", type=float, default=0.2, help="Sampling temperature")
-    parser.add_argument("--top_k", type=int, default=25, help="Top-k filtering threshold")
-    parser.add_argument("--top_p", type=float, default=0.85, help="Top-p nucleus sampling threshold")
+    parser.add_argument("--temperature", type=float, default=0.6, help="Sampling temperature (0.3 for deterministic/tool, 0.6 for chat)")
+    parser.add_argument("--top_k", type=int, default=40, help="Top-k filtering threshold")
+    parser.add_argument("--top_p", type=float, default=0.9, help="Top-p nucleus sampling threshold")
     parser.add_argument(
-        "--repetition_penalty", type=float, default=1.25, help="Penalty for repeating tokens"
+        "--repetition_penalty", type=float, default=1.3, help="Penalty for repeating tokens"
     )
     parser.add_argument(
         "--max_tokens", type=int, default=150, help="Maximum new tokens to generate"
     )
     parser.add_argument(
-        "--chatml", action="store_true", default=True, help="Use ChatML formatting for prompt"
+        "--chatml", action="store_true", default=True, help="Use standard chat template for prompt"
     )
     parser.add_argument(
         "--system",
         type=str,
-        default="You are ParagAI, a compact, professional AI assistant built from first principles in Python.",
-        help="System instruction for ChatML prompt",
+        default="You are ParagAI, a compact, professional AI assistant.",
+        help="System instruction for chat prompt",
     )
     args = parser.parse_args()
 
@@ -117,18 +117,25 @@ def main():
             if not user_input.strip():
                 continue
 
-            # Format with ChatML if requested
+            # Format with standard ParagAI Chat Template
             if args.chatml:
                 prompt_text = (
-                    f"<|im_start|>system\n{args.system}<|im_end|>\n"
-                    f"<|im_start|>user\n{user_input}<|im_end|>\n"
-                    f"<|im_start|>assistant\n"
+                    f"<|system|>{args.system}<|end|>\n"
+                    f"<|user|>{user_input}<|end|>\n"
+                    f"<|assistant|>"
                 )
             else:
                 prompt_text = user_input
 
             console.print("[bold green]ParagAI:[/bold green] ", end="")
-            stop_markers = ["<|im_end|>", "<|endoftext|>", "\nUser:", "<|im_start|>"]
+            stop_markers = [
+                "<|end|>",
+                "<|im_end|>",
+                "<|endoftext|>",
+                "<|user|>",
+                "<|system|>",
+                "<|im_start|>",
+            ]
             max_stop_len = max(len(w) for w in stop_markers)
             stream_buf = ""
 

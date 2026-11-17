@@ -42,6 +42,10 @@ VALID_VOCAB_SIZES = (4096, 8192, 16384, 32768)
 
 # ChatML & utility special tokens appended after the base-4 specials
 CHATML_SPECIAL_TOKENS: list[str] = [
+    "<|system|>",
+    "<|user|>",
+    "<|assistant|>",
+    "<|end|>",
     "<|im_start|>",
     "<|im_end|>",
     "<|endoftext|>",
@@ -83,10 +87,14 @@ class IndicBPETokenizer(BPETokenizer):
     """
 
     # Additional special token IDs (follow the base 4 from BaseTokenizer)
-    IM_START_ID: int = 4
-    IM_END_ID: int = 5
-    ENDOFTEXT_ID: int = 6
-    TOOL_CALL_ID: int = 7
+    SYSTEM_ID: int = 4
+    USER_ID: int = 5
+    ASSISTANT_ID: int = 6
+    END_ID: int = 7
+    IM_START_ID: int = 8
+    IM_END_ID: int = 9
+    ENDOFTEXT_ID: int = 10
+    TOOL_CALL_ID: int = 11
 
     def __init__(self, vocab_size: int = 4096) -> None:
         if vocab_size not in VALID_VOCAB_SIZES:
@@ -281,19 +289,30 @@ class IndicBPETokenizer(BPETokenizer):
         return ids
 
     def _encode_chunk(self, chunk: str) -> list[int]:
-        words = _WORD_REGEX.findall(chunk)
-        ids: list[int] = []
-        for word in words:
-            raw_bytes = list(word.encode("utf-8"))
-            word_ids = [b + self._byte_offset for b in raw_bytes]
+        # Pre-split special tokens so they are treated atomically
+        special_pattern = "(" + "|".join(re.escape(s) for s in self.special_tokens) + ")"
+        parts = re.split(special_pattern, chunk)
+        token_to_id = {tok: idx for idx, tok in enumerate(self.special_tokens)}
 
-            while len(word_ids) >= 2:
-                stats = self.get_stats(word_ids)
-                pair = min(stats, key=lambda p: self.merges.get(p, float("inf")))
-                if pair not in self.merges:
-                    break
-                word_ids = self.merge(word_ids, pair, self.merges[pair])
-            ids.extend(word_ids)
+        ids: list[int] = []
+        for part in parts:
+            if not part:
+                continue
+            if part in token_to_id:
+                ids.append(token_to_id[part])
+                continue
+            words = _WORD_REGEX.findall(part)
+            for word in words:
+                raw_bytes = list(word.encode("utf-8"))
+                word_ids = [b + self._byte_offset for b in raw_bytes]
+
+                while len(word_ids) >= 2:
+                    stats = self.get_stats(word_ids)
+                    pair = min(stats, key=lambda p: self.merges.get(p, float("inf")))
+                    if pair not in self.merges:
+                        break
+                    word_ids = self.merge(word_ids, pair, self.merges[pair])
+                ids.extend(word_ids)
         return ids
 
     def decode(self, ids: list[int], skip_special_tokens: bool = True) -> str:

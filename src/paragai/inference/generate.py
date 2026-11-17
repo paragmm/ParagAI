@@ -1,12 +1,21 @@
-"""Autoregressive text generation pipeline with Key-Value (KV) Caching."""
+"""Autoregressive text generation pipeline with Key-Value (KV) Caching and chat formatting."""
 
 from collections.abc import Iterator
+from typing import Iterable
 
 import torch
 
 from paragai.inference.sampler import sample_next_token
 from paragai.model.transformer import ParagAIModel
 from paragai.tokenizer.base import BaseTokenizer
+
+
+def format_chat_prompt(
+    user_input: str,
+    system_message: str = "You are ParagAI, a compact, professional AI assistant.",
+) -> str:
+    """Format user query into standard ParagAI Chat Template with open assistant turn."""
+    return f"<|system|>{system_message}<|end|>\n<|user|>{user_input}<|end|>\n<|assistant|>"
 
 
 class Generator:
@@ -21,16 +30,31 @@ class Generator:
         self.model.to(self.device)
         self.model.eval()
 
+    def _resolve_stop_ids(self, extra_stop_ids: Iterable[int] | None = None) -> set[int]:
+        """Resolve all token IDs that should trigger a hard stop during generation."""
+        stop_ids = {self.tokenizer.EOS_ID}
+        if hasattr(self.tokenizer, "END_ID"):
+            stop_ids.add(self.tokenizer.END_ID)
+        if hasattr(self.tokenizer, "token_to_id"):
+            for tok_str in ("<|end|>", "<|im_end|>", "<|endoftext|>"):
+                tid = self.tokenizer.token_to_id(tok_str)
+                if tid is not None:
+                    stop_ids.add(tid)
+        if extra_stop_ids:
+            stop_ids.update(extra_stop_ids)
+        return stop_ids
+
     @torch.no_grad()
     def generate(
         self,
         prompt: str,
-        max_new_tokens: int = 100,
-        temperature: float = 0.8,
+        max_new_tokens: int = 150,
+        temperature: float = 0.6,
         top_k: int | None = 40,
         top_p: float | None = 0.9,
-        repetition_penalty: float = 1.1,
+        repetition_penalty: float = 1.3,
         stop_on_eos: bool = True,
+        stop_token_ids: Iterable[int] | None = None,
         use_cache: bool = True,
         include_prompt: bool = True,
     ) -> str:
@@ -39,17 +63,19 @@ class Generator:
         Args:
             prompt: Input text prompt.
             max_new_tokens: Maximum number of new tokens to generate.
-            temperature: Sampling temperature.
+            temperature: Sampling temperature (0.3 for deterministic/tool, 0.6 for chat).
             top_k: Top-k filtering threshold.
             top_p: Top-p nucleus sampling threshold.
-            repetition_penalty: Penalty for repeating tokens.
-            stop_on_eos: Whether to stop generation when EOS token is sampled.
+            repetition_penalty: Penalty for repeating tokens (default 1.3).
+            stop_on_eos: Whether to stop generation when an EOS or <|end|> token is sampled.
+            stop_token_ids: Optional additional token IDs that should trigger hard stop.
             use_cache: Whether to use KV-caching for O(1) step generation.
             include_prompt: If True, returns prompt + generated tokens. If False, returns generated tokens only.
         """
         token_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
         x = torch.tensor([token_ids], dtype=torch.long, device=self.device)
 
+        stop_ids = self._resolve_stop_ids(stop_token_ids)
         generated = list(token_ids)
         kv_caches = None
 
@@ -70,7 +96,7 @@ class Generator:
             generated_tokens=torch.tensor(generated, device=self.device),
         )
 
-        if stop_on_eos and next_token == self.tokenizer.EOS_ID:
+        if stop_on_eos and next_token in stop_ids:
             return self.tokenizer.decode(
                 generated if include_prompt else generated[len(token_ids) :]
             )
@@ -103,7 +129,8 @@ class Generator:
                 generated_tokens=torch.tensor(generated, device=self.device),
             )
 
-            if stop_on_eos and next_token == self.tokenizer.EOS_ID:
+            # Hard stop condition
+            if stop_on_eos and next_token in stop_ids:
                 break
 
             generated.append(next_token)
@@ -115,17 +142,19 @@ class Generator:
     def stream_generate(
         self,
         prompt: str,
-        max_new_tokens: int = 100,
-        temperature: float = 0.8,
+        max_new_tokens: int = 150,
+        temperature: float = 0.6,
         top_k: int | None = 40,
         top_p: float | None = 0.9,
-        repetition_penalty: float = 1.1,
+        repetition_penalty: float = 1.3,
         stop_on_eos: bool = True,
+        stop_token_ids: Iterable[int] | None = None,
     ) -> Iterator[str]:
         """Stream generated characters/tokens using KV-cache with minimal latency."""
         token_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
         x = torch.tensor([token_ids], dtype=torch.long, device=self.device)
 
+        stop_ids = self._resolve_stop_ids(stop_token_ids)
         generated = list(token_ids)
 
         # Prefill prompt
@@ -141,7 +170,7 @@ class Generator:
             generated_tokens=torch.tensor(generated, device=self.device),
         )
 
-        if stop_on_eos and next_token == self.tokenizer.EOS_ID:
+        if stop_on_eos and next_token in stop_ids:
             return
 
         generated.append(next_token)
@@ -164,7 +193,8 @@ class Generator:
                 generated_tokens=torch.tensor(generated, device=self.device),
             )
 
-            if stop_on_eos and next_token == self.tokenizer.EOS_ID:
+            # Hard stop condition
+            if stop_on_eos and next_token in stop_ids:
                 break
 
             generated.append(next_token)

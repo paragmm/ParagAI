@@ -20,8 +20,8 @@ from paragai.utils.telemetry import TrainingTelemetry
 
 logger = get_logger("Trainer")
 
-# ChatML generation-preview prompt
-_PREVIEW_PROMPT = "<|im_start|>user\nHello<|im_end|>\n<|im_start|>assistant\n"
+# Chat generation-preview prompt
+_PREVIEW_PROMPT = "<|system|>You are ParagAI, a compact, professional AI assistant.<|end|>\n<|user|>Hello<|end|>\n<|assistant|>"
 
 
 class Trainer:
@@ -215,11 +215,21 @@ class Trainer:
             max_new = 50
             seq_len = raw.config.max_seq_len
 
+            end_ids = {self.tokenizer.EOS_ID}
+            if hasattr(self.tokenizer, "END_ID"):
+                end_ids.add(self.tokenizer.END_ID)
+            if hasattr(self.tokenizer, "token_to_id"):
+                eid = self.tokenizer.token_to_id("<|end|>")
+                if eid is not None:
+                    end_ids.add(eid)
+
             for _ in range(max_new):
                 ctx = input_ids[:, -seq_len:]
                 with self._amp_ctx:
                     logits, _ = raw(ctx)
                 next_id = logits[:, -1, :].argmax(dim=-1, keepdim=True)
+                if next_id.item() in end_ids:
+                    break
                 input_ids = torch.cat([input_ids, next_id], dim=1)
 
             generated_ids = input_ids[0, len(ids) :].tolist()
@@ -251,18 +261,32 @@ class Trainer:
         torch.save(checkpoint, file_path)
         logger.info(f"Saved checkpoint to {file_path}")
 
-    def load_checkpoint(self, file_path: str) -> None:
-        """Resume training from a saved checkpoint (backwards-compatible)."""
+    def load_checkpoint(self, file_path: str, load_optimizer: bool = True) -> None:
+        """Resume training or load weights from a saved checkpoint (backwards-compatible)."""
         checkpoint = torch.load(file_path, map_location=self.device)
-        # Filter legacy causal-mask buffers that are no longer part of the state
+        raw = self._raw_model()
         state_dict = {
             k: v for k, v in checkpoint["model_state_dict"].items() if not k.endswith(".attn.mask")
         }
-        self._raw_model().load_state_dict(state_dict, strict=False)
-        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        self.current_iter = checkpoint["current_iter"]
-        self.best_val_loss = checkpoint.get("best_val_loss", float("inf"))
-        logger.info(f"Resumed checkpoint from {file_path} at iteration {self.current_iter}")
+        # Check if embedding weights require resizing
+        if "token_embedding.weight" in state_dict:
+            ckpt_vocab_size = state_dict["token_embedding.weight"].shape[0]
+            if ckpt_vocab_size != raw.config.vocab_size:
+                logger.info(
+                    f"Resizing model token embeddings from {raw.config.vocab_size} to checkpoint vocab size ({ckpt_vocab_size})"
+                )
+                raw.resize_token_embeddings(ckpt_vocab_size)
+
+        raw.load_state_dict(state_dict, strict=False)
+        if load_optimizer and "optimizer_state_dict" in checkpoint:
+            try:
+                self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"Could not load optimizer state (using fresh optimizer): {e}")
+
+        self.current_iter = checkpoint.get("current_iter", 0) if load_optimizer else 0
+        self.best_val_loss = checkpoint.get("best_val_loss", float("inf")) if load_optimizer else float("inf")
+        logger.info(f"Loaded checkpoint from {file_path} (load_optimizer={load_optimizer})")
 
     # ---------------------------------------------------------------------- #
     # Main training loop                                                        #
