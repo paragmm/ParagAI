@@ -95,19 +95,43 @@ def main():
         default="all",
         help="Which data stage to prepare",
     )
+    parser.add_argument(
+        "--no_tags",
+        action="store_true",
+        help="Legacy compatibility flag for stripping prompt tags",
+    )
+    parser.add_argument(
+        "--raw_dir",
+        type=str,
+        default="data/raw",
+        help="Directory containing raw training text files",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="data/processed/combined_corpus.txt",
+        help="Target output file path",
+    )
+    parser.add_argument(
+        "--category",
+        type=str,
+        default=None,
+        help="Optional category filter",
+    )
     args = parser.parse_args()
 
     pretrain_path = "data/processed/pretrain_corpus.txt"
     sft_path = "data/processed/sft_corpus.txt"
 
     if args.stage in ("all", "pretrain"):
-        pretrain_path = prepare_pretrain_corpus()
+        pretrain_path = prepare_pretrain_corpus(raw_dir=args.raw_dir)
     if args.stage in ("all", "sft"):
         sft_path = prepare_sft_corpus()
 
     # Generate combined_corpus.txt for backwards compatibility with legacy train configs
-    if args.stage == "all":
-        combined_path = "data/processed/combined_corpus.txt"
+    if args.stage == "all" or args.no_tags:
+        combined_path = args.output
+        os.makedirs(os.path.dirname(combined_path) or ".", exist_ok=True)
         with open(combined_path, "w", encoding="utf-8") as out:
             if os.path.exists(pretrain_path):
                 with open(pretrain_path, "r", encoding="utf-8") as f:
