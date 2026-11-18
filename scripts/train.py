@@ -94,8 +94,11 @@ def main():
     if args.learning_rate is not None:
         train_yaml["learning_rate"] = args.learning_rate
     elif args.stage == "sft":
-        train_yaml["learning_rate"] = 3e-5
-        logger.info("Stage 2 SFT mode: defaulted learning rate to 3e-5")
+        # For compact models (<50M parameters), fine-tuning requires higher LR (~3.5e-4)
+        # to adapt embeddings and attention to chat tags and instruction formats without underfitting.
+        train_yaml["learning_rate"] = 3.5e-4
+        train_yaml["min_lr"] = 3.5e-5
+        logger.info("Stage 2 SFT mode: defaulted learning rate to 3.5e-4 (compact model fine-tuning)")
     else:
         # Default pretrain lr: 4e-4 unless specified in yaml
         train_yaml["learning_rate"] = train_yaml.get("learning_rate", 4e-4)

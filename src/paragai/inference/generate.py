@@ -87,13 +87,18 @@ class Generator:
             logits, _ = self.model(x)
             next_logits = logits[0, -1, :].clone()
 
+        repetition_ctx = (
+            torch.tensor(generated[len(token_ids):], device=self.device)
+            if len(generated) > len(token_ids)
+            else None
+        )
         next_token = sample_next_token(
             next_logits,
             temperature=temperature,
             top_k=top_k,
             top_p=top_p,
             repetition_penalty=repetition_penalty,
-            generated_tokens=torch.tensor(generated, device=self.device),
+            generated_tokens=repetition_ctx,
         )
 
         if stop_on_eos and next_token in stop_ids:
@@ -120,13 +125,18 @@ class Generator:
                 logits, _ = self.model(x_full)
                 next_logits = logits[0, -1, :].clone()
 
+            repetition_ctx = (
+                torch.tensor(generated[len(token_ids):], device=self.device)
+                if len(generated) > len(token_ids)
+                else None
+            )
             next_token = sample_next_token(
                 next_logits,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
                 repetition_penalty=repetition_penalty,
-                generated_tokens=torch.tensor(generated, device=self.device),
+                generated_tokens=repetition_ctx,
             )
 
             # Hard stop condition
@@ -161,13 +171,18 @@ class Generator:
         logits, _, kv_caches = self.model(x, use_cache=True)
         next_logits = logits[0, -1, :].clone()
 
+        repetition_ctx = (
+            torch.tensor(generated[len(token_ids):], device=self.device)
+            if len(generated) > len(token_ids)
+            else None
+        )
         next_token = sample_next_token(
             next_logits,
             temperature=temperature,
             top_k=top_k,
             top_p=top_p,
             repetition_penalty=repetition_penalty,
-            generated_tokens=torch.tensor(generated, device=self.device),
+            generated_tokens=repetition_ctx,
         )
 
         if stop_on_eos and next_token in stop_ids:
@@ -184,13 +199,18 @@ class Generator:
             logits, _, kv_caches = self.model(curr_token, past_kv_caches=kv_caches, use_cache=True)
             next_logits = logits[0, -1, :].clone()
 
+            repetition_ctx = (
+                torch.tensor(generated[len(token_ids):], device=self.device)
+                if len(generated) > len(token_ids)
+                else None
+            )
             next_token = sample_next_token(
                 next_logits,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
                 repetition_penalty=repetition_penalty,
-                generated_tokens=torch.tensor(generated, device=self.device),
+                generated_tokens=repetition_ctx,
             )
 
             # Hard stop condition
