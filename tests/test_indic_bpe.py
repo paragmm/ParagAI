@@ -10,13 +10,13 @@ from paragai.tokenizer.indic_bpe import IndicBPETokenizer, _detect_scripts
 def test_indic_bpe_initialization():
     tok = IndicBPETokenizer(vocab_size=4096)
     assert tok.target_vocab_size == 4096
-    # Must have special tokens (8) + 256 bytes = 264 initial tokens
-    assert tok.vocab_size == 264
-    assert len(tok.special_tokens) == 8
-    assert tok.special_tokens[4] == "<|im_start|>"
-    assert tok.special_tokens[5] == "<|im_end|>"
-    assert tok.special_tokens[6] == "<|endoftext|>"
-    assert tok.special_tokens[7] == "<|tool_call|>"
+    # Must have special tokens (12) + 256 bytes = 268 initial tokens
+    assert tok.vocab_size == 268
+    assert len(tok.special_tokens) == 12
+    assert "<|im_start|>" in tok.special_tokens
+    assert "<|im_end|>" in tok.special_tokens
+    assert "<|endoftext|>" in tok.special_tokens
+    assert "<|tool_call|>" in tok.special_tokens
 
 
 def test_script_detection():

@@ -3,9 +3,13 @@
 Modes:
 - Pre-train: Compiles continuous English stories (TinyStories, technology, prose) without tags.
 - SFT: Compiles 100% formatted chat dialogues (<|system|>...<|user|>...<|assistant|>...<|end|>).
+- All: Compiles pre-train, SFT, and a combined corpus for full training pipelines.
 """
 
+from __future__ import annotations
+
 import argparse
+import glob
 import os
 import sys
 
@@ -27,13 +31,14 @@ def prepare_pretrain_corpus(
     """Extract clean English text for Stage 1 pre-training without prompt tags."""
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    # Prefer TinyStories and English text
-    target_files = [
-        os.path.join(raw_dir, "stories", "tinystories_local.txt"),
+    # Automatically find all TinyStories files (colab, local, or chunked)
+    story_files = sorted(glob.glob(os.path.join(raw_dir, "stories", "tinystories*.txt")))
+    other_files = [
         os.path.join(raw_dir, "stories", "english_story.txt"),
         os.path.join(raw_dir, "technology", "ai_transformer.txt"),
         os.path.join(raw_dir, "technology", "python_intro.txt"),
     ]
+    target_files = story_files + [f for f in other_files if f not in story_files]
 
     total_bytes = 0
     max_bytes = int(max_mb * 1024 * 1024)
@@ -92,10 +97,28 @@ def main():
     )
     args = parser.parse_args()
 
+    pretrain_path = "data/processed/pretrain_corpus.txt"
+    sft_path = "data/processed/sft_corpus.txt"
+
     if args.stage in ("all", "pretrain"):
-        prepare_pretrain_corpus()
+        pretrain_path = prepare_pretrain_corpus()
     if args.stage in ("all", "sft"):
-        prepare_sft_corpus()
+        sft_path = prepare_sft_corpus()
+
+    # Generate combined_corpus.txt for backwards compatibility with legacy train configs
+    if args.stage == "all":
+        combined_path = "data/processed/combined_corpus.txt"
+        with open(combined_path, "w", encoding="utf-8") as out:
+            if os.path.exists(pretrain_path):
+                with open(pretrain_path, "r", encoding="utf-8") as f:
+                    out.write(f.read().strip() + "\n\n")
+            if os.path.exists(sft_path):
+                with open(sft_path, "r", encoding="utf-8") as f:
+                    out.write(f.read().strip() + "\n\n")
+        console.print(f"[bold green]Created combined corpus for full training:[/bold green] [cyan]{combined_path}[/cyan]")
+
+    sys.stdout.flush()
+    sys.exit(0)
 
 
 if __name__ == "__main__":

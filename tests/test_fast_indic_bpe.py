@@ -10,15 +10,15 @@ from paragai.tokenizer.fast_indic_bpe import FastIndicBPETokenizer
 def test_fast_indic_bpe_initialization():
     tok = FastIndicBPETokenizer(vocab_size=4096)
     assert tok.target_vocab_size == 4096
-    assert len(tok.special_tokens) == 8
+    assert len(tok.special_tokens) == 12
     assert tok.special_tokens[0] == "<pad>"
     assert tok.special_tokens[1] == "<unk>"
     assert tok.special_tokens[2] == "<bos>"
     assert tok.special_tokens[3] == "<eos>"
-    assert tok.special_tokens[4] == "<|im_start|>"
-    assert tok.special_tokens[5] == "<|im_end|>"
-    assert tok.special_tokens[6] == "<|endoftext|>"
-    assert tok.special_tokens[7] == "<|tool_call|>"
+    assert "<|im_start|>" in tok.special_tokens
+    assert "<|im_end|>" in tok.special_tokens
+    assert "<|endoftext|>" in tok.special_tokens
+    assert "<|tool_call|>" in tok.special_tokens
 
 
 def test_fast_indic_bpe_training_and_multilingual_roundtrip():

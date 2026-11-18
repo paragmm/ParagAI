@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 
 
 def fetch_via_datasets(num_stories: int, output_path: str) -> int:
@@ -22,31 +23,39 @@ def fetch_via_datasets(num_stories: int, output_path: str) -> int:
         return 0
 
     print("[fetch] Using HuggingFace datasets library (streaming mode)...")
-    dataset = load_dataset("roneneldan/TinyStories", split="train", streaming=True)
+    try:
+        dataset = load_dataset("roneneldan/TinyStories", split="train", streaming=True)
+    except (OSError, RuntimeError, ValueError) as exc:
+        print(f"[fetch] Failed to load dataset via datasets library: {exc}")
+        return 0
+
     count = 0
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        for item in dataset:
-            story = item.get("text", "").strip()
-            if story:
-                f.write(story + "\n\n<|endoftext|>\n\n")
-                count += 1
-                if count % 1000 == 0:
-                    print(f"  Fetched {count:,}/{num_stories:,} stories...")
-                if count >= num_stories:
-                    break
+    try:
+        with open(output_path, "w", encoding="utf-8") as f:
+            for item in dataset:
+                story = item.get("text", "").strip()
+                if story:
+                    f.write(story + "\n\n<|endoftext|>\n\n")
+                    count += 1
+                    if count % 1000 == 0:
+                        print(f"  Fetched {count:,}/{num_stories:,} stories...")
+                        sys.stdout.flush()
+                    if count >= num_stories:
+                        break
+    finally:
+        del dataset
 
     return count
 
 
 def fetch_via_http(num_stories: int, output_path: str) -> int:
     """Fetch stories via direct HTTP download from HuggingFace dataset raw files."""
+    import urllib.error
     import urllib.request
 
     print("[fetch] Using direct HTTP fallback from Hugging Face...")
-    # Hugging Face provides data files for roneneldan/TinyStories
-    # e.g. TinyStories-train.txt or parquet splits
     url = (
         "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-train.txt"
     )
@@ -59,7 +68,7 @@ def fetch_via_http(num_stories: int, output_path: str) -> int:
             urllib.request.urlopen(req, timeout=30) as resp,
             open(output_path, "w", encoding="utf-8") as out,
         ):
-            current_story = []
+            current_story: list[str] = []
             for line in resp:
                 text = line.decode("utf-8", errors="replace")
                 if "<|endoftext|>" in text:
@@ -70,13 +79,13 @@ def fetch_via_http(num_stories: int, output_path: str) -> int:
                         current_story = []
                         if count % 1000 == 0:
                             print(f"  Fetched {count:,}/{num_stories:,} stories...")
+                            sys.stdout.flush()
                         if count >= num_stories:
                             break
                 else:
                     current_story.append(text)
     except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
         print(f"[fetch] HTTP download encountered note: {exc}")
-        # If full file is unavailable, write sample stories for demonstration
         if count == 0:
             print("[fetch] Generating initial TinyStories template slice...")
             sample_stories = [
@@ -105,15 +114,32 @@ def main() -> None:
         default="data/raw/stories/tinystories_chunk_01.txt",
         help="Output file path",
     )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Force re-download even if output file already exists",
+    )
     args = parser.parse_args()
 
+    # Skip download if already exists with valid content
+    if not args.overwrite and os.path.exists(args.output) and os.path.getsize(args.output) > 100_000:
+        size_mb = os.path.getsize(args.output) / (1024 * 1024)
+        print(f"[Done] Found existing {args.output} ({size_mb:.2f} MB). Skipping download.")
+        sys.stdout.flush()
+        os._exit(0)
+
     print(f"Fetching {args.num_stories:,} stories to {args.output}...")
+    sys.stdout.flush()
     count = fetch_via_datasets(args.num_stories, args.output)
     if count == 0:
         count = fetch_via_http(args.num_stories, args.output)
 
     size_mb = os.path.getsize(args.output) / (1024 * 1024) if os.path.exists(args.output) else 0.0
     print(f"[Done] Successfully fetched {count:,} stories ({size_mb:.2f} MB) -> {args.output}")
+    sys.stdout.flush()
+
+    # Force process exit to ensure background streaming threads from HF datasets do not hang
+    os._exit(0)
 
 
 if __name__ == "__main__":
